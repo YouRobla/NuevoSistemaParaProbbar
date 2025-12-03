@@ -1,10 +1,10 @@
 services:
   web:
     image: odoo:17.0
-    ports:
-      - "8070:8069" # ← PUERTO EXTERNO NUEVO PARA ESTA INSTANCIA
     depends_on:
       - db
+    ports:
+      - "8070:8069"
     environment:
       - HOST=db
       - USER=odoo
@@ -13,6 +13,8 @@ services:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
       - ./files/addons:/mnt/extra-addons
+    networks:
+      - odoonet
 
   db:
     image: postgres:15
@@ -22,6 +24,12 @@ services:
       - POSTGRES_PASSWORD=odoo
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - odoonet
+
+networks:
+  odoonet:
+
 
 volumes:
   odoo-web-data:
