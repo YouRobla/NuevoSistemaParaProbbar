@@ -8,7 +8,7 @@ services:
       - USER=odoo
       - PASSWORD=odoo
     ports:
-      - "8069:8069"
+      - "8067:8067"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
