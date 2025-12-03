@@ -7,8 +7,6 @@ services:
       - HOST=db
       - USER=odoo
       - PASSWORD=odoo
-    ports:
-      - "8067:8067"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
