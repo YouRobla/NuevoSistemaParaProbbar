@@ -3,8 +3,6 @@ services:
     image: odoo:17.0
     depends_on:
       - db
-    ports:
-      - "8062:8062"
     environment:
       - HOST=db
       - USER=odoo
