@@ -1,6 +1,8 @@
 services:
   web:
     image: odoo:17.0
+    ports:
+      - "8070:8069" # ← PUERTO EXTERNO NUEVO PARA ESTA INSTANCIA
     depends_on:
       - db
     environment:
