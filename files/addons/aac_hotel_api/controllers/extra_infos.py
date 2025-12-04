@@ -24,7 +24,7 @@ class HotelExtraInfosController(http.Controller):
     # ENDPOINTS PARA INFORMACIÓN ADICIONAL (EXTRA INFOS)
     # =============================================================================
 
-    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos', auth='public', type='http', methods=['GET'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
     @validate_api_key
     def get_extra_infos(self, booking_id, **kw):
         """Obtener información adicional de una reserva"""
@@ -89,7 +89,7 @@ class HotelExtraInfosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos', auth='public', type='http', methods=['PUT'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False)
     @validate_api_key
     def update_extra_infos(self, booking_id, **kw):
         """Actualizar información adicional de una reserva"""
@@ -208,7 +208,7 @@ class HotelExtraInfosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos/remarks', auth='public', type='http', methods=['POST'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos/remarks', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False)
     @validate_api_key
     def update_remarks(self, booking_id, **kw):
         """Actualizar solo las observaciones/notas de una reserva"""
@@ -260,7 +260,7 @@ class HotelExtraInfosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos/company', auth='public', type='http', methods=['POST'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/extra_infos/company', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False)
     @validate_api_key
     def update_company(self, booking_id, **kw):
         """Actualizar solo la empresa de una reserva"""
