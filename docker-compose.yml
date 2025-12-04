@@ -1,33 +1,40 @@
 version: '3'
 
 services:
-
   web:
     container_name: odoo-web
-    image: ${WEB_IMAGE_NAME}
+    image: odoo:17.0
     depends_on:
       - db
     ports:
-      - "${WEB_PORT}:8069"
+      - "8070:8069"
+      - "8072:8072"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
       - ./files/addons:/mnt/extra-addons
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
+    networks:
+      - odoonet
 
   db:
-    container_name: db # 👈 Nombre que odoo.conf puede resolver
-    image: ${DB_IMAGE}
+    container_name: db
+    image: postgres:15
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=admin
     ports:
-      - "${DB_PORT}:5432"
+      - "5434:5432" # Cambié el puerto externo para evitar conflicto
     volumes:
-      - odoo-db-data:/var/lib/postgresql/data/pgdata
+      - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - odoonet
 
 volumes:
-  odoo-db-data:
   odoo-web-data:
+  odoo-db-data:
+
+
+networks:
+  odoonet:
