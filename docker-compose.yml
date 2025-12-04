@@ -6,8 +6,8 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8070:8069" # Puerto externo para Odoo
-      - "8072:8072" # WebSocket / Longpolling
+      - "8070:8069"
+      - "8072:8072"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
@@ -15,17 +15,6 @@ services:
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
     networks:
       - odoonet
-    labels:
-      # Habilitar Traefik
-      - "traefik.enable=true"
-      # Middleware CORS
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowheaders=Authorization,Content-Type,X-Requested-With"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolalloworiginlist=https://hotel.calendar.consulting-sac.consulting-sac.com.pe"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowcredentials=true"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolmaxage=3600"
-      # Aplicar middleware al router (Dokploy usará su propio router, pero esto ayuda)
-      - "traefik.http.routers.odoo-web.middlewares=odoo-cors"
 
   db:
     image: postgres:15

@@ -31,7 +31,7 @@
 
     <record id="action_react_calendar_view" model="ir.actions.act_url">
         <field name="name">Vista Calendario</field>
-        <field name="url">http://62.84.189.34:8080/</field>
+        <field name="url">https://hotel.calendar.consulting-sac.consulting-sac.com.pe/</field>
         <field name="target">new</field>
     </record>
 
