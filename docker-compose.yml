@@ -7,8 +7,8 @@ services:
     depends_on:
       - db
     ports:
-      - "8070:8069"
-      - "8072:8072"
+      - "8070:8069" # Puerto externo para Odoo
+      - "8072:8072" # WebSocket / Longpolling
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
@@ -25,7 +25,7 @@ services:
       - POSTGRES_USER=odoo
       - POSTGRES_PASSWORD=admin
     ports:
-      - "5434:5432" # Cambié el puerto externo para evitar conflicto
+      - "5434:5432" # Puerto externo diferente para evitar conflicto con otras DB
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
     networks:
