@@ -9,7 +9,6 @@ services:
       - db
     ports:
       - "${WEB_PORT}:8069"
-      - "${WEBSOCKET_PORT}:8072"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
