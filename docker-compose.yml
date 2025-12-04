@@ -3,21 +3,21 @@ version: '3'
 services:
 
   web:
-    container_name: ${WEB_HOST}
+    container_name: odoo-web
     image: ${WEB_IMAGE_NAME}
     depends_on:
       - db
     ports:
-      - "${WEB_PORT}:8069" # Puerto público de Odoo
-      - "${WEBSOCKET_PORT}:8072" # Para LiveChat / longpolling
+      - "${WEB_PORT}:8069"
+      - "${WEBSOCKET_PORT}:8072"
     volumes:
       - odoo-web-data:/var/lib/odoo
-      - ./files/config:/etc/odoo # Aquí va tu odoo.conf
+      - ./files/config:/etc/odoo
       - ./files/addons:/mnt/extra-addons
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
 
   db:
-    container_name: ${DB_HOST}
+    container_name: db # 👈 Nombre que odoo.conf puede resolver
     image: ${DB_IMAGE}
     environment:
       - POSTGRES_DB=${DB_NAME}
