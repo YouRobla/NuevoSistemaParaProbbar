@@ -2358,7 +2358,7 @@ class HotelApiController(http.Controller):
             'data': response_payload
         })
 
-    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_hoteles(self, **kw):

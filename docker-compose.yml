@@ -5,9 +5,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    expose:
-      - "8069"
-      - "8072"
+    ports:
+      - "8070:8069" # Puerto externo para Odoo
+      - "8072:8072" # WebSocket / Longpolling
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./files/config:/etc/odoo
@@ -15,24 +15,16 @@ services:
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
     networks:
       - odoonet
-      - dokploy-network
     labels:
       # Habilitar Traefik
       - "traefik.enable=true"
-      # Router para Odoo
-      - "traefik.http.routers.odoo-web.rule=Host(`odoo.consulting.docker.consulting-sac.com.pe`)"
-      - "traefik.http.routers.odoo-web.entrypoints=websecure"
-      - "traefik.http.routers.odoo-web.tls=true"
-      - "traefik.http.routers.odoo-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.odoo-web.loadbalancer.server.port=8069"
       # Middleware CORS
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowheaders=Authorization,Content-Type,X-Requested-With"
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolalloworiginlist=https://hotel.calendar.consulting-sac.consulting-sac.com.pe"
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowcredentials=true"
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolmaxage=3600"
-      - "traefik.http.middlewares.odoo-cors.headers.addvaryheader=true"
-      # Aplicar middleware CORS al router
+      # Aplicar middleware al router (Dokploy usará su propio router, pero esto ayuda)
       - "traefik.http.routers.odoo-web.middlewares=odoo-cors"
 
   db:
@@ -60,5 +52,3 @@ volumes:
 
 networks:
   odoonet:
-  dokploy-network:
-    external: true

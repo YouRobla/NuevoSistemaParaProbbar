@@ -8,10 +8,40 @@ from odoo.tools import json_default
 
 _logger = logging.getLogger(__name__)
 
+# Orígenes permitidos para CORS
+ALLOWED_ORIGINS = [
+    'https://hotel.calendar.consulting-sac.consulting-sac.com.pe',
+    'http://localhost:3000',
+    'http://localhost:5173',
+]
+
+
+def get_cors_headers(origin=None):
+    """
+    Obtener headers CORS apropiados para la respuesta.
+    """
+    # Verificar si el origen está permitido
+    if origin and origin in ALLOWED_ORIGINS:
+        allowed_origin = origin
+    elif origin and origin.startswith('http://localhost'):
+        allowed_origin = origin  # Permitir cualquier localhost para desarrollo
+    else:
+        allowed_origin = ALLOWED_ORIGINS[0]  # Default al primer origen
+    
+    return {
+        'Access-Control-Allow-Origin': allowed_origin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-API-Key, x-api-key, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '3600',
+    }
+
 
 def validate_api_key(func):
     """
     Decorador para validar API Key nativa de Odoo en endpoints.
+    
+    Maneja peticiones OPTIONS (preflight CORS) automáticamente sin requerir autenticación.
     
     Usa el sistema nativo de API keys de Odoo 17 que se genera desde:
     Preferencias del usuario → Seguridad de la cuenta → Claves API
@@ -21,6 +51,18 @@ def validate_api_key(func):
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        # Obtener el origen de la petición
+        origin = request.httprequest.headers.get('Origin', '')
+        cors_headers = get_cors_headers(origin)
+        
+        # Manejar preflight OPTIONS - retornar inmediatamente con headers CORS
+        if request.httprequest.method == 'OPTIONS':
+            return Response(
+                '',
+                status=200,
+                headers=cors_headers
+            )
+        
         # Obtener API key del header
         api_key = None
         
@@ -36,8 +78,8 @@ def validate_api_key(func):
             if auth_header and auth_header.startswith('Bearer '):
                 api_key = auth_header.replace('Bearer ', '').strip()
         
-        # Si aún no hay API key, intentar desde parámetros (solo para GET/OPTIONS)
-        if not api_key and request.httprequest.method in ('GET', 'OPTIONS'):
+        # Si aún no hay API key, intentar desde parámetros (solo para GET)
+        if not api_key and request.httprequest.method == 'GET':
             api_key = request.params.get('api_key') or request.httprequest.args.get('api_key')
         
         if not api_key:
@@ -53,6 +95,7 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
+                    **cors_headers,
                     'WWW-Authenticate': 'Bearer'
                 }
             )
@@ -91,6 +134,7 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
+                    **cors_headers,
                     'WWW-Authenticate': 'Bearer'
                 }
             )
@@ -106,6 +150,7 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
+                    **cors_headers,
                     'WWW-Authenticate': 'Bearer'
                 }
             )
@@ -120,7 +165,14 @@ def validate_api_key(func):
         )
         
         # Ejecutar la función original con el usuario correcto
-        return func(self, *args, **kwargs)
+        result = func(self, *args, **kwargs)
+        
+        # Si el resultado es una Response, agregar headers CORS
+        if isinstance(result, Response):
+            for key, value in cors_headers.items():
+                result.headers[key] = value
+        
+        return result
     
     return wrapper
 
