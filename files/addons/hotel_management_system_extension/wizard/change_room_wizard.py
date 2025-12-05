@@ -2,6 +2,9 @@
 from datetime import datetime, timedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ChangeRoomWizard(models.TransientModel):
@@ -433,6 +436,13 @@ class ChangeRoomWizard(models.TransientModel):
         # porque las órdenes pueden contener referencias a los servicios
         
         sale_orders = self.env['sale.order'].search([('booking_id', '=', booking.id)])
+        
+        # FIX: Asegurar que encontramos la orden incluso si el search falla pero está vinculada
+        if not sale_orders and booking.order_id:
+            _logger.info('Orden de venta no encontrada por búsqueda inversa, usando booking.order_id: %s', booking.order_id.name)
+            sale_orders = booking.order_id
+            
+        _logger.info('Órdenes de venta encontradas para transferir: %s', sale_orders.ids)
         if sale_orders:
             # ESTRATEGIA: Transferir toda la facturación a la nueva reserva
             # Esto mantiene la facturación unificada y evita confusiones

@@ -1704,17 +1704,29 @@ class HotelBookingExtension(models.Model):
         self.ensure_one()
         _logger.info('=== ACTUALIZANDO ÓRDENES EXISTENTES CON SERVICIOS FALTANTES ===')
         
-        # Buscar todas las órdenes relacionadas
+        # Buscar todas las órdenes relacionadas, incluyendo las de reservas conectadas
+        # Esto es crucial para cambios de habitación donde la orden se mueve a la nueva reserva
+        booking_ids = [self.id]
+        if self.connected_booking_id:
+            booking_ids.append(self.connected_booking_id.id)
+        if self.split_from_booking_id:
+            booking_ids.append(self.split_from_booking_id.id)
+            
         all_orders = self.env['sale.order'].search([
-            ('booking_id', '=', self.id),
+            ('booking_id', 'in', booking_ids),
             ('state', 'in', ['draft', 'sent', 'sale'])
         ])
         
         if self.order_id and self.order_id not in all_orders:
             all_orders |= self.order_id
+            
+        # Si la reserva actual no tiene orden pero su conectada sí, usar esa explícitamente
+        if not self.order_id and self.connected_booking_id and self.connected_booking_id.order_id:
+             if self.connected_booking_id.order_id not in all_orders:
+                all_orders |= self.connected_booking_id.order_id
         
         if not all_orders:
-            _logger.warning('No se encontraron órdenes de venta para actualizar en reserva %s', self.id)
+            _logger.warning('No se encontraron órdenes de venta para actualizar en reserva %s (ni en conectadas)', self.id)
             return 0
         
         total_services_added = 0
