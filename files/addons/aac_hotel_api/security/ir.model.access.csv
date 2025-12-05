@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hotel_api_response,access_hotel_api_response,model_hotel_api_response,base.group_user,1,1,1,0
+access_hotel_api_response_user,hotel.api.response.user,model_hotel_api_response,base.group_user,1,1,1,1
+access_hotel_api_response_public,hotel.api.response.public,model_hotel_api_response,,1,0,0,0
+
