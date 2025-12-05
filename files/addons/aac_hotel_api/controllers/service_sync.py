@@ -14,7 +14,8 @@ class ServiceSyncApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/sync_services',
         type='json',
         auth='public',
-        methods=['POST'],
+        methods=['POST', 'OPTIONS'],
+        cors='*',
         csrf=False,
         website=False,
     )

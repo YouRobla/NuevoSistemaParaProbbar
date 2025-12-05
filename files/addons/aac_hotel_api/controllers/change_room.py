@@ -58,6 +58,7 @@ class ChangeRoomApiController(http.Controller):
         type='json',
         auth='public',
         methods=['GET', 'POST', 'OPTIONS'],
+        cors='*',
         csrf=False,
         website=False,
     )
@@ -132,6 +133,7 @@ class ChangeRoomApiController(http.Controller):
         type='json',
         auth='public',
         methods=['POST', 'OPTIONS'],
+        cors='*',
         csrf=False,
         website=False,
     )
