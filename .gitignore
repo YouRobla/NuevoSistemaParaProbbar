@@ -1,11 +1,11 @@
-# Python
+# Python - Archivos compilados (se regeneran automáticamente)
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 
-# Odoo
+# Odoo - Archivos compilados y temporales
 *.pyc
 *.pyo
 *.log
@@ -15,6 +15,10 @@ __pycache__/
 *.pot~
 *.po~
 *.mo~
+
+# Odoo - Archivos de sesión y caché
+*.session
+*.session.lock
 
 # Environment
 .env
