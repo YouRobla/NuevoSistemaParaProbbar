@@ -165,7 +165,7 @@ class HotelInformacionPreciosController(http.Controller):
     # ENDPOINTS PARA INFORMACIÓN DE PRECIOS
     # =============================================================================
 
-    @http.route('/api/hotel/booking/<int:booking_id>/price_info', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/price_info', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_price_info(self, booking_id, **kw):
         """Obtener información completa de precios de una reserva"""
@@ -194,7 +194,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/price_breakdown', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/price_breakdown', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_price_breakdown(self, booking_id, **kw):
         """Obtener desglose detallado de precios"""
@@ -229,7 +229,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/price_info', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/price_info', auth='public', type='http', methods=['PUT'], csrf=False)
     @validate_api_key
     def update_price_info(self, booking_id, **kw):
         """Actualizar campos específicos de precios de una reserva"""
@@ -313,7 +313,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/price_info/recalculate', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/price_info/recalculate', auth='public', type='http', methods=['POST'], csrf=False)
     @validate_api_key
     def recalculate_prices(self, booking_id, **kw):
         """Recalcular todos los precios de una reserva"""
@@ -357,7 +357,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/booking/<int:booking_id>/price_history', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/booking/<int:booking_id>/price_history', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_price_history(self, booking_id, **kw):
         """Obtener historial de cambios de precios de una reserva"""
@@ -400,7 +400,7 @@ class HotelInformacionPreciosController(http.Controller):
     # =============================================================================
 
 
-    @http.route('/api/hotel/user/<int:user_id>/price_summary', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/user/<int:user_id>/price_summary', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_user_price_summary(self, user_id, **kw):
         """Obtener resumen financiero de un usuario"""
@@ -473,7 +473,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/user/<int:user_id>/price_breakdown', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/user/<int:user_id>/price_breakdown', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_user_price_breakdown(self, user_id, **kw):
         """Obtener desglose detallado de precios de todas las reservas de un usuario"""
@@ -553,7 +553,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/user/<int:user_id>/price_filters', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/user/<int:user_id>/price_filters', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_user_price_filters(self, user_id, **kw):
         """Obtener opciones de filtros disponibles para un usuario"""
@@ -618,7 +618,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/user/<int:user_id>/guests', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/user/<int:user_id>/guests', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_user_guests(self, user_id, **kw):
         """Obtener lista de huéspedes de todas las reservas de un usuario"""
@@ -703,7 +703,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/user/<int:user_id>/guest/<int:guest_id>/price_info', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/user/<int:user_id>/guest/<int:guest_id>/price_info', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_guest_price_info(self, user_id, guest_id, **kw):
         """Obtener información de precios específica de un huésped"""
@@ -785,7 +785,7 @@ class HotelInformacionPreciosController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/guest/<int:guest_id>/price_info', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/guest/<int:guest_id>/price_info', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_guest_direct_price_info(self, guest_id, **kw):
         """Obtener información de precios directamente de un huésped específico"""

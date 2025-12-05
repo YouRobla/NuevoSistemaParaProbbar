@@ -165,7 +165,7 @@ class ContactsAPIController(http.Controller):
         
         return data
 
-    @http.route('/api/v1/contacts', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/contacts', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_contacts(self, **params):
@@ -204,7 +204,7 @@ class ContactsAPIController(http.Controller):
             }
         )
 
-    @http.route('/api/v1/contacts/<int:contact_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/contacts/<int:contact_id>', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_contact_detail(self, contact_id, **params):
@@ -234,14 +234,14 @@ class ContactsAPIController(http.Controller):
         contact_data = self._format_partner_data(contact[0], detailed=True)
         return self._success_response(contact_data)
 
-    @http.route('/api/v1/contacts/search', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/contacts/search', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def search_contacts(self, **params):
         """Alias para búsqueda."""
         return self.get_contacts(**params)
 
-    @http.route('/api/v1/contacts/stats', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/contacts/stats', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_contacts_stats(self, **params):
@@ -273,7 +273,7 @@ class ContactsAPIController(http.Controller):
         
         return self._success_response(stats)
 
-    @http.route('/api/v1/contacts/export', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/contacts/export', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def export_contacts(self, **params):

@@ -293,7 +293,7 @@ class HotelCambioPrecioController(http.Controller):
         '/api/hotel/booking_line/<int:line_id>/price_info',
         auth='public',
         type='http',
-        methods=['GET', 'OPTIONS'],
+        methods=['GET'],
         csrf=False
     )
     @validate_api_key
@@ -333,7 +333,7 @@ class HotelCambioPrecioController(http.Controller):
         '/api/hotel/booking_line/<int:line_id>/price_history',
         auth='public',
         type='http',
-        methods=['GET', 'OPTIONS'],
+        methods=['GET'],
         csrf=False
     )
     @validate_api_key
@@ -406,7 +406,7 @@ class HotelCambioPrecioController(http.Controller):
         '/api/hotel/booking_line/<int:line_id>/change_price',
         auth='public',
         type='http',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False
     )
     @validate_api_key
@@ -565,7 +565,7 @@ class HotelCambioPrecioController(http.Controller):
         '/api/hotel/booking_line/<int:line_id>/reset_price',
         auth='public',
         type='http',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False
     )
     @validate_api_key
@@ -693,7 +693,7 @@ class HotelCambioPrecioController(http.Controller):
         '/api/hotel/booking/<int:booking_id>/lines/price_info',
         auth='public',
         type='http',
-        methods=['GET', 'OPTIONS'],
+        methods=['GET'],
         csrf=False
     )
     @validate_api_key

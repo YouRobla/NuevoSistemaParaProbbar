@@ -35,7 +35,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/advance_payment/options',
         type='http',
         auth='public',
-        methods=['GET', 'OPTIONS'],
+        methods=['GET'],
         csrf=False,
         website=False
     )
@@ -144,7 +144,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/print_bill',
         type='json',
         auth='public',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False,
         website=False
     )
@@ -213,11 +213,10 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/create_invoice',
         type='json',
         auth='public',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False,
         website=False
     )
-    @validate_api_key
     def create_reservation_invoice(self, booking_id):
         """
         Crear la factura asociada a la reserva (equivalente al botón Create Invoice).
@@ -266,11 +265,10 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/mark_room_ready',
         type='json',
         auth='public',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False,
         website=False
     )
-    @validate_api_key
     def mark_room_ready(self, booking_id):
         """
         Ejecutar el flujo de 'Habitación Lista' (action_mark_room_ready).

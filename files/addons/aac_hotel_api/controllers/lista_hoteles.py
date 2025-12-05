@@ -39,7 +39,7 @@ class ListaHotelesController(http.Controller):
             content_type='application/json',
         )
 
-    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_hoteles(self, **kw):
         """
@@ -49,7 +49,7 @@ class ListaHotelesController(http.Controller):
             Response: JSON con la lista de hoteles o mensaje de error
         """
         try:
-            hoteles = request.env['hotel.hotels'].search_read(
+            hoteles = request.env['hotel.hotels'].sudo().search_read(
                 [], 
                 ['name', 'partner_id', 'address', 'tagline', 'image', 
                  'banner', 'policies', 'hotel_type_id', 'company_id', 'description', 'is_published']
@@ -84,7 +84,7 @@ class ListaHotelesController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/hoteles/<int:hotel_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/hoteles/<int:hotel_id>', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_hotel_by_id(self, hotel_id, **kw):
         """
@@ -105,7 +105,7 @@ class ListaHotelesController(http.Controller):
                 }, status=400)
             
             # Buscar el hotel con información completa
-            hotel = request.env['hotel.hotels'].search_read(
+            hotel = request.env['hotel.hotels'].sudo().search_read(
                 [('id', '=', hotel_id), ('active', '=', True)], 
                 ['name', 'partner_id', 'address', 'tagline', 'image', 
                  'banner', 'policies', 'hotel_type_id', 'company_id', 'description', 
@@ -125,7 +125,7 @@ class ListaHotelesController(http.Controller):
             
             # Obtener información del partner asociado
             if hotel_data.get('partner_id'):
-                partner = request.env['res.partner'].browse(hotel_data['partner_id'][0])
+                partner = request.env['res.partner'].sudo().browse(hotel_data['partner_id'][0])
                 hotel_data['partner_info'] = {
                     'name': partner.name,
                     'email': partner.email,
@@ -141,11 +141,11 @@ class ListaHotelesController(http.Controller):
             
             # Obtener información del tipo de hotel
             if hotel_data.get('hotel_type_id'):
-                hotel_type = request.env['hotel.type'].browse(hotel_data['hotel_type_id'][0])
+                hotel_type = request.env['hotel.type'].sudo().browse(hotel_data['hotel_type_id'][0])
                 hotel_data['hotel_type_name'] = hotel_type.hotel_type
             
             # Contar habitaciones asociadas
-            room_count = request.env['product.template'].search_count([
+            room_count = request.env['product.template'].sudo().search_count([
                 ('is_room_type', '=', True), 
                 ('hotel_id', '=', hotel_id),
                 ('active', '=', True)
@@ -160,27 +160,13 @@ class ListaHotelesController(http.Controller):
             })
             
         except AccessError as e:
-            _logger.warning("Error de acceso en get_hotel_by_id: %s", str(e))
-            return self._prepare_response({
-                'success': False,
-                'error': 'No tiene permisos para acceder a esta información'
-            }, status=403)
-            
-        except ValidationError as e:
-            _logger.error("Error de validación en get_hotel_by_id: %s", str(e))
-            return self._prepare_response({
-                'success': False,
-                'error': 'Error de validación en los datos'
-            }, status=400)
-            
-        except Exception as e:
             _logger.exception("Error inesperado en get_hotel_by_id: %s", str(e))
             return self._prepare_response({
                 'success': False,
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/hoteles/search', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/hoteles/search', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def search_hoteles(self, **kw):
         """
@@ -190,7 +176,7 @@ class ListaHotelesController(http.Controller):
         - name: Nombre del hotel (búsqueda parcial)
         - city: Ciudad del hotel
         - hotel_type_id: ID del tipo de hotel
-        - is_published: Solo hoteles userados (true/false)
+        - is_published: Solo hoteles publicados (true/false)
         - limit: Límite de resultados (default: 50)
         - offset: Desplazamiento para paginación (default: 0)
         
@@ -228,7 +214,7 @@ class ListaHotelesController(http.Controller):
                 domain.append(('is_published', '=', is_published.lower() == 'true'))
             
             # Buscar hoteles
-            hoteles = request.env['hotel.hotels'].search_read(
+            hoteles = request.env['hotel.hotels'].sudo().search_read(
                 domain,
                 ['name', 'partner_id', 'address', 'tagline', 'image', 
                  'banner', 'policies', 'hotel_type_id', 'company_id', 'description', 
@@ -239,7 +225,7 @@ class ListaHotelesController(http.Controller):
             )
             
             # Contar total de resultados
-            total_count = request.env['hotel.hotels'].search_count(domain)
+            total_count = request.env['hotel.hotels'].sudo().search_count(domain)
             
             _logger.info("Búsqueda de hoteles: %d resultados encontrados", len(hoteles))
             
@@ -266,7 +252,7 @@ class ListaHotelesController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/debug/data', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/debug/data', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def debug_data(self, **kw):
         """
@@ -277,24 +263,24 @@ class ListaHotelesController(http.Controller):
         """
         try:
             # Contar hoteles
-            total_hoteles = request.env['hotel.hotels'].search_count([])
-            hoteles_activos = request.env['hotel.hotels'].search_count([('active', '=', True)])
+            total_hoteles = request.env['hotel.hotels'].sudo().search_count([])
+            hoteles_activos = request.env['hotel.hotels'].sudo().search_count([('active', '=', True)])
             
             # Contar productos/habitaciones
-            total_productos = request.env['product.template'].search_count([])
-            habitaciones = request.env['product.template'].search_count([('is_room_type', '=', True)])
-            habitaciones_activas = request.env['product.template'].search_count([
+            total_productos = request.env['product.template'].sudo().search_count([])
+            habitaciones = request.env['product.template'].sudo().search_count([('is_room_type', '=', True)])
+            habitaciones_activas = request.env['product.template'].sudo().search_count([
                 ('is_room_type', '=', True), ('active', '=', True)
             ])
             
             # Obtener algunos ejemplos
-            hoteles_ejemplo = request.env['hotel.hotels'].search_read(
+            hoteles_ejemplo = request.env['hotel.hotels'].sudo().search_read(
                 [('active', '=', True)], 
                 ['id', 'name', 'is_published'], 
                 limit=5
             )
             
-            habitaciones_ejemplo = request.env['product.template'].search_read(
+            habitaciones_ejemplo = request.env['product.template'].sudo().search_read(
                 [('is_room_type', '=', True), ('active', '=', True)], 
                 ['id', 'name', 'hotel_id', 'list_price'], 
                 limit=5
@@ -324,7 +310,7 @@ class ListaHotelesController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/hoteles/<int:hotel_id>/cuartos', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/hoteles/<int:hotel_id>/cuartos', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_cuartos_by_hotel(self, hotel_id, **kw):
         """
@@ -338,7 +324,7 @@ class ListaHotelesController(http.Controller):
         """
         try:
             # Verificar que el hotel existe
-            hotel = request.env['hotel.hotels'].search([('id', '=', hotel_id)], limit=1)
+            hotel = request.env['hotel.hotels'].sudo().search([('id', '=', hotel_id)], limit=1)
             
             if not hotel:
                 _logger.info("Hotel con ID %d no encontrado", hotel_id)
@@ -348,7 +334,7 @@ class ListaHotelesController(http.Controller):
                 }, status=404)
             
             # Buscar habitaciones asociadas al hotel
-            cuartos = request.env['product.template'].search_read(
+            cuartos = request.env['product.template'].sudo().search_read(
                 [('is_room_type', '=', True), ('hotel_id', '=', hotel_id)],
                 ['name', 'list_price', 'max_adult', 'max_child', 'max_infants', 'base_occupancy', 'hotel_id', 'service_ids', 'facility_ids']
             )
@@ -384,7 +370,7 @@ class ListaHotelesController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/cuartos', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/cuartos', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_cuartos(self, **kw):
         """
@@ -395,7 +381,7 @@ class ListaHotelesController(http.Controller):
         """
         try:
             # Consultamos las habitaciones (productos con is_room_type = True)
-            cuartos = request.env['product.template'].search_read(
+            cuartos = request.env['product.template'].sudo().search_read(
                 [('is_room_type', '=', True)],
                 ['name', 'id', 'max_adult', 'max_child', 'max_infants', 'base_occupancy', 'service_ids', 'facility_ids']
             )
@@ -429,7 +415,7 @@ class ListaHotelesController(http.Controller):
                 'error': 'Error interno del servidor'
             }, status=500)
 
-    @http.route('/api/hotel/cuartos/<int:cuarto_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/hotel/cuartos/<int:cuarto_id>', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     def get_cuarto_by_id(self, cuarto_id, **kw):
         """
@@ -442,7 +428,7 @@ class ListaHotelesController(http.Controller):
             Response: JSON con los datos de la habitación o mensaje de error
         """
         try:
-            cuarto = request.env['product.template'].search_read(
+            cuarto = request.env['product.template'].sudo().search_read(
                 [('id', '=', cuarto_id), ('is_room_type', '=', True)],
                 ['name', 'id', 'max_adult', 'max_child', 'max_infants', 'base_occupancy', 'service_ids', 'facility_ids'],
                 limit=1
@@ -450,7 +436,7 @@ class ListaHotelesController(http.Controller):
             
             if not cuarto:
                 # Verificar si el producto existe pero no es habitación
-                producto = request.env['product.template'].search([('id', '=', cuarto_id)], limit=1)
+                producto = request.env['product.template'].sudo().search([('id', '=', cuarto_id)], limit=1)
                 if producto:
                     error_msg = f'Producto con ID {cuarto_id} existe pero no es una habitación (is_room_type=False). Use IDs: 35, 38, 42, 44, 46...'
                 else:
