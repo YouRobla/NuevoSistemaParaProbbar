@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime, time, date as date_type
+import json
 from odoo import http, fields
-from odoo.http import request
+from odoo.http import request, Response
+from odoo.tools import json_default
 from odoo.exceptions import UserError
 from .api_auth import validate_api_key
 
@@ -55,10 +56,9 @@ class ChangeRoomApiController(http.Controller):
 
     @http.route(
         '/api/hotel/reserva/<int:booking_id>/change_room/options',
-        type='json',
+        type='http',
         auth='public',
         methods=['GET', 'POST', 'OPTIONS'],
-        cors='*',
         csrf=False,
         website=False,
     )
@@ -67,8 +67,15 @@ class ChangeRoomApiController(http.Controller):
         """
         Obtener valores predeterminados y habitaciones disponibles para el cambio.
         """
-        payload = request.get_json_data() or {}
-        line_id = payload.get('booking_line_id') or kwargs.get('booking_line_id')
+        try:
+            payload = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+        except Exception:
+            payload = {}
+
+        # Merge payload from body with kwargs (query params)
+        payload.update(kwargs)
+        
+        line_id = payload.get('booking_line_id')
         booking, line = self._get_booking_and_line(booking_id, int(line_id) if line_id else None)
 
         proposed_start = fields.Date.context_today(request.env.user)
@@ -120,20 +127,23 @@ class ChangeRoomApiController(http.Controller):
             'custom_price': wizard.custom_price,
         }
 
-        return {
-            'success': True,
-            'data': {
-                'defaults': defaults,
-                'available_rooms': available_room_payload,
-            }
-        }
+        return Response(
+            json.dumps({
+                'success': True,
+                'data': {
+                    'defaults': defaults,
+                    'available_rooms': available_room_payload,
+                }
+            }, default=json_default),
+            status=200,
+            content_type='application/json'
+        )
 
     @http.route(
         '/api/hotel/reserva/<int:booking_id>/change_room',
-        type='json',
+        type='http',
         auth='public',
         methods=['POST', 'OPTIONS'],
-        cors='*',
         csrf=False,
         website=False,
     )
@@ -141,18 +151,11 @@ class ChangeRoomApiController(http.Controller):
     def apply_change_room(self, booking_id):
         """
         Ejecutar el cambio de habitación con los parámetros enviados desde el frontend.
-        
-        Acepta fechas con o sin horas:
-        - change_start_date: "2024-01-15" o "2024-01-15 14:00:00"
-        - change_end_date: "2024-01-20" o "2024-01-20 11:00:00"
-        
-        O también puede recibir:
-        - change_start_datetime: "2024-01-15T14:00:00" (ISO datetime)
-        - change_end_datetime: "2024-01-20T11:00:00" (ISO datetime)
-        
-        Si se proporcionan horas, se usarán. Si no, se usarán las horas de la reserva original.
         """
-        payload = request.get_json_data() or {}
+        try:
+            payload = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+        except Exception:
+            payload = {}
         line_id = payload.get('booking_line_id')
         booking, line = self._get_booking_and_line(booking_id, line_id)
 
@@ -352,10 +355,14 @@ class ChangeRoomApiController(http.Controller):
                     'status_bar': new_booking.status_bar,
                 }
 
-        return {
-            'success': True,
-            'message': 'Cambio de habitación aplicado correctamente.',
-            'data': response_data
-        }
+        return Response(
+            json.dumps({
+                'success': True,
+                'message': 'Cambio de habitación aplicado correctamente.',
+                'data': response_data
+            }, default=json_default),
+            status=200,
+            content_type='application/json'
+        )
 
 
