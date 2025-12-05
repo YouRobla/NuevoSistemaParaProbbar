@@ -1277,7 +1277,7 @@ class HotelApiController(http.Controller):
         
         return domain
 
-    @http.route('/api/hotel/reservas/<int:hotel_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas/<int:hotel_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas_by_hotel_id(self, hotel_id, **kw):
@@ -1325,7 +1325,7 @@ class HotelApiController(http.Controller):
             'data': reservas_list
         })
 
-    @http.route('/api/hotel/reservas/habitacion/<int:room_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas/habitacion/<int:room_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas_by_room_id(self, room_id, **kw):
@@ -1440,7 +1440,7 @@ class HotelApiController(http.Controller):
             'data': reservas_list
         })
 
-    @http.route('/api/hotel/reservas', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas(self, **kw):
@@ -1613,7 +1613,7 @@ class HotelApiController(http.Controller):
         
         return self._prepare_response(response_data)
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reserva_by_id(self, reserva_id, **kw):
@@ -1638,7 +1638,7 @@ class HotelApiController(http.Controller):
             'data': self._build_booking_data(booking)
         })
 
-    @http.route('/api/hotel/reserva', auth='public', type='http', methods=['POST'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def create_reserva(self, **kw):
@@ -1799,7 +1799,7 @@ class HotelApiController(http.Controller):
             }
         }, status=201)
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['PUT'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def update_reserva(self, reserva_id, **kw):
@@ -1903,7 +1903,7 @@ class HotelApiController(http.Controller):
             'data': self._build_booking_data(booking)
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['DELETE'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['DELETE', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def delete_reserva(self, reserva_id, **kw):
@@ -1962,7 +1962,7 @@ class HotelApiController(http.Controller):
                 'data': self._build_booking_data(booking)
             })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/habitaciones', auth='public', type='http', methods=['POST'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/habitaciones', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def add_rooms_to_reserva(self, reserva_id, **kw):
@@ -2025,7 +2025,7 @@ class HotelApiController(http.Controller):
         })
 
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/estado', auth='public', type='http', methods=['PUT'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/estado', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def change_reserva_status(self, reserva_id, **kw):
@@ -2116,7 +2116,7 @@ class HotelApiController(http.Controller):
             'data': response_data
         })
     
-    @http.route('/api/hotel/reserva/<int:reserva_id>/send_email', auth='public', type='http', methods=['POST'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/send_email', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def send_reserva_email(self, reserva_id, **kw):
@@ -2180,7 +2180,7 @@ class HotelApiController(http.Controller):
             }
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment', auth='public', type='http', methods=['POST'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def create_reserva_advance_payment(self, reserva_id, **kw):
@@ -2286,7 +2286,7 @@ class HotelApiController(http.Controller):
             }
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment/options', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment/options', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reserva_advance_payment_options(self, reserva_id, **kw):
@@ -2358,7 +2358,7 @@ class HotelApiController(http.Controller):
             'data': response_payload
         })
 
-    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_hoteles(self, **kw):
@@ -2384,7 +2384,7 @@ class HotelApiController(http.Controller):
             'data': hotels_list
         })
 
-    @http.route('/api/hotel/habitaciones', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/habitaciones', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_habitaciones(self, **kw):
@@ -2613,7 +2613,7 @@ class HotelApiController(http.Controller):
             'version': '1.0.0'
         })
 
-    @http.route('/api/hotel/gantt/data', auth='public', type='http', methods=['GET'], csrf=False, website=False)
+    @http.route('/api/hotel/gantt/data', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_gantt_data(self, **kw):

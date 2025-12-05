@@ -12,123 +12,124 @@ _logger = logging.getLogger(__name__)
 def validate_api_key(func):
     """
     Decorador para validar API Key nativa de Odoo en endpoints.
-
+    
     Usa el sistema nativo de API keys de Odoo 17 que se genera desde:
     Preferencias del usuario → Seguridad de la cuenta → Claves API
-
+    
     La API key debe venir en el header 'X-API-Key' o 'Authorization: Bearer <key>'
     Si la validación es exitosa, establece el usuario correspondiente en request.env.
+     También maneja headers CORS.
     """
-
+    
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        # Definir headers CORS por defecto
+        cors_headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key, X-News-Token',
+            'Access-Control-Allow-Credentials': 'true',
+        }
+
+        # Manejar preflight request (OPTIONS)
+        if request.httprequest.method == 'OPTIONS':
+            return Response(status=200, headers=cors_headers)
+
         # Obtener API key del header
         api_key = None
-
+        
         # Intentar obtener de X-API-Key header
-        if hasattr(request.httprequest, "headers"):
-            api_key = request.httprequest.headers.get(
-                "X-API-Key"
-            ) or request.httprequest.headers.get("x-api-key")
-
+        if hasattr(request.httprequest, 'headers'):
+            api_key = request.httprequest.headers.get('X-API-Key') or request.httprequest.headers.get('x-api-key')
+            
         # Si no está en X-API-Key, intentar Authorization Bearer
-        if not api_key and hasattr(request.httprequest, "headers"):
-            auth_header = request.httprequest.headers.get(
-                "Authorization"
-            ) or request.httprequest.headers.get("authorization")
-            if auth_header and auth_header.startswith("Bearer "):
-                api_key = auth_header.replace("Bearer ", "").strip()
-
+        if not api_key and hasattr(request.httprequest, 'headers'):
+            auth_header = request.httprequest.headers.get('Authorization') or request.httprequest.headers.get('authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                api_key = auth_header.replace('Bearer ', '').strip()
+                
         # Si aún no hay API key, intentar desde parámetros (solo para GET/OPTIONS)
-        if not api_key and request.httprequest.method in ("GET", "OPTIONS"):
-            api_key = request.params.get("api_key") or request.httprequest.args.get(
-                "api_key"
-            )
-
+        if not api_key and request.httprequest.method in ('GET', 'OPTIONS'):
+            api_key = request.params.get('api_key') or request.httprequest.args.get('api_key')
+            
         if not api_key:
-            _logger.warning(
-                "Intento de acceso sin API key a endpoint: %s", func.__name__
-            )
+            _logger.warning("Intento de acceso sin API key a endpoint: %s", func.__name__)
+            headers = {'WWW-Authenticate': 'Bearer'}
+            headers.update(cors_headers)
             return Response(
-                json.dumps(
-                    {
-                        "success": False,
-                        "error": "API Key requerida. Proporcione la API key en el header X-API-Key o Authorization: Bearer <key>. Puede generarla desde Preferencias → Seguridad de la cuenta → Claves API",
-                    },
-                    default=json_default,
-                ),
+                json.dumps({
+                    'success': False,
+                    'error': 'API Key requerida. Proporcione la API key en el header X-API-Key o Authorization: Bearer <key>. Puede generarla desde Preferencias → Seguridad de la cuenta → Claves API'
+                }, default=json_default),
                 status=401,
-                content_type="application/json",
-                headers={"WWW-Authenticate": "Bearer"},
+                content_type='application/json',
+                headers=headers
             )
-
+            
         # Usar el sistema nativo de autenticación de Odoo 17
         # Las API keys nativas se generan desde: Preferencias → Seguridad de la cuenta → Claves API
         uid = None
-
+        
         try:
             # Odoo 17 almacena las API keys en res.users.apikeys
             # Usar el método nativo _check_credentials para validar
-            apikey_model = request.env["res.users.apikeys"].sudo()
-
+            apikey_model = request.env['res.users.apikeys'].sudo()
+            
             # El método _check_credentials verifica y retorna el user_id
-            uid = apikey_model._check_credentials(scope="rpc", key=api_key)
-
+            uid = apikey_model._check_credentials(scope='rpc', key=api_key)
+            
             if uid:
-                user = request.env["res.users"].sudo().browse(uid)
+                user = request.env['res.users'].sudo().browse(uid)
                 _logger.debug("API key nativa validada para usuario: %s", user.login)
-
+                
         except (KeyError, AttributeError, ValueError) as e:
             _logger.debug("Error validando API key nativa: %s", str(e))
-
+            
         # Si aún no hay uid, la API key es inválida
         if not uid:
-            _logger.warning(
-                "API key inválida o expirada en endpoint: %s (IP: %s)",
-                func.__name__,
-                getattr(request.httprequest, "remote_addr", "unknown"),
-            )
+            _logger.warning("API key inválida o expirada en endpoint: %s (IP: %s)", func.__name__, getattr(request.httprequest, 'remote_addr', 'unknown'))
+            headers = {'WWW-Authenticate': 'Bearer'}
+            headers.update(cors_headers)
             return Response(
-                json.dumps(
-                    {
-                        "success": False,
-                        "error": "API Key inválida, expirada o revocada. Verifique su API key en Preferencias → Seguridad de la cuenta → Claves API",
-                    },
-                    default=json_default,
-                ),
+                json.dumps({
+                    'success': False,
+                    'error': 'API Key inválida, expirada o revocada. Verifique su API key en Preferencias → Seguridad de la cuenta → Claves API'
+                }, default=json_default),
                 status=401,
-                content_type="application/json",
-                headers={"WWW-Authenticate": "Bearer"},
+                content_type='application/json',
+                headers=headers
             )
-
+            
         # Establecer el usuario en el entorno
-        user = request.env["res.users"].sudo().browse(uid)
+        user = request.env['res.users'].sudo().browse(uid)
         if not user.exists():
+            headers = {'WWW-Authenticate': 'Bearer'}
+            headers.update(cors_headers)
             return Response(
-                json.dumps(
-                    {
-                        "success": False,
-                        "error": "Usuario asociado a la API key no encontrado",
-                    },
-                    default=json_default,
-                ),
+                json.dumps({
+                    'success': False,
+                    'error': 'Usuario asociado a la API key no encontrado'
+                }, default=json_default),
                 status=401,
-                content_type="application/json",
-                headers={"WWW-Authenticate": "Bearer"},
+                content_type='application/json',
+                headers=headers
             )
-
+            
         # Actualizar el entorno completo con el usuario autenticado
         request.update_env(user=uid)
-
-        _logger.debug(
-            "API key validada exitosamente para usuario %s en endpoint: %s",
-            user.login,
-            func.__name__,
-        )
-
-        # Ejecutar la función original con el usuario correcto
-        return func(self, *args, **kwargs)
-
+        
+        _logger.debug("API key validada exitosamente para usuario %s en endpoint: %s", user.login, func.__name__)
+        
+        # Ejecutar la función original
+        result = func(self, *args, **kwargs)
+        
+        # Asegurar que la respuesta tenga headers CORS si es un objeto Response
+        if isinstance(result, Response):
+            for key, value in cors_headers.items():
+                result.headers[key] = value
+        
+        return result
+        
     return wrapper
 
 

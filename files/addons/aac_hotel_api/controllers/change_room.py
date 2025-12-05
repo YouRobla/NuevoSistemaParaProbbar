@@ -57,7 +57,7 @@ class ChangeRoomApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/change_room/options',
         type='json',
         auth='public',
-        methods=['GET', 'POST'],
+        methods=['GET', 'POST', 'OPTIONS'],
         csrf=False,
         website=False,
     )
@@ -131,7 +131,7 @@ class ChangeRoomApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/change_room',
         type='json',
         auth='public',
-        methods=['POST'],
+        methods=['POST', 'OPTIONS'],
         csrf=False,
         website=False,
     )
