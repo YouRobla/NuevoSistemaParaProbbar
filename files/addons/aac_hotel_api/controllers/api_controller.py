@@ -2082,8 +2082,23 @@ class HotelApiController(http.Controller):
         
         if new_status in ['confirmed', 'confirm'] and hasattr(booking, 'action_confirm_booking'):
             _logger.info("Ejecutando action_confirm_booking para la reserva %s", reserva_id)
+            
+            # Guardamos las fechas originales para evitar que action_confirm_booking las sobrescriba
+            # con las horas por defecto del hotel (manage_check_in_out_based_on_restime)
+            original_check_in = booking.check_in
+            original_check_out = booking.check_out
+            
             try:
                 booking.action_confirm_booking()
+                
+                # Verificamos si las fechas fueron alteradas y las restauramos si es necesario
+                if booking.check_in != original_check_in or booking.check_out != original_check_out:
+                    _logger.info("Restaurando fechas originales de la reserva %s tras confirmación", reserva_id)
+                    booking.write({
+                        'check_in': original_check_in,
+                        'check_out': original_check_out
+                    })
+                
                 triggered_action = True
                 # Después de la acción tomamos el estado real desde el registro
                 final_status = booking.status_bar
