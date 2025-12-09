@@ -270,7 +270,7 @@ class HotelStatesAPIController(http.Controller):
         return graph
 
     @http.route('/api/v1/hotel/states/booking', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_booking_states(self, **params):
@@ -314,7 +314,7 @@ class HotelStatesAPIController(http.Controller):
         return self._success_response(response_data)
 
     @http.route('/api/v1/hotel/states/booking/<string:state_code>', auth='public', 
-                type='http', methods=['GET', 'OPTIONS'], csrf=False)
+                type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_booking_state_detail(self, state_code, **params):
@@ -367,7 +367,7 @@ class HotelStatesAPIController(http.Controller):
         return self._success_response(state_data)
 
     @http.route('/api/v1/hotel/states/housekeeping', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_housekeeping_states(self, **params):
@@ -411,7 +411,7 @@ class HotelStatesAPIController(http.Controller):
         return self._success_response(response_data)
 
     @http.route('/api/v1/hotel/states/housekeeping/<string:state_code>', auth='public', 
-                type='http', methods=['GET', 'OPTIONS'], csrf=False)
+                type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_housekeeping_state_detail(self, state_code, **params):
@@ -464,7 +464,7 @@ class HotelStatesAPIController(http.Controller):
         return self._success_response(state_data)
 
     @http.route('/api/v1/hotel/states', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @handle_exceptions
     def get_all_states(self, **params):
         """
@@ -550,7 +550,7 @@ class HotelStatesAPIController(http.Controller):
         return self._success_response(response_data)
 
     @http.route('/api/v1/hotel/states/validate-transition', auth='public', 
-                type='http', methods=['GET', 'OPTIONS'], csrf=False)
+                type='http', methods=['GET'], csrf=False)
     @handle_exceptions
     def validate_state_transition(self, **params):
         """

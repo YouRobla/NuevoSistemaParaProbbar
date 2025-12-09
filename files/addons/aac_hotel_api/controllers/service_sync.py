@@ -1,9 +1,7 @@
 from odoo import http
-from odoo.http import request, Response
-from odoo.tools import json_default
+from odoo.http import request
 from odoo.exceptions import UserError
 from .api_auth import validate_api_key
-import json
 
 
 class ServiceSyncApiController(http.Controller):
@@ -14,9 +12,9 @@ class ServiceSyncApiController(http.Controller):
 
     @http.route(
         '/api/hotel/reserva/<int:booking_id>/sync_services',
-        type='http',
+        type='json',
         auth='public',
-        methods=['POST', 'OPTIONS'],
+        methods=['POST'],
         csrf=False,
         website=False,
     )
@@ -101,17 +99,13 @@ class ServiceSyncApiController(http.Controller):
             else:
                 message = 'No se encontraron órdenes de venta para sincronizar.'
 
-        return Response(
-            json.dumps({
-                'success': True,
-                'message': message,
-                'data': {
-                    'reserva_id': booking.id,
-                    'services_synced': total_services_added,
-                    'orders': order_payload,
-                    'bookings_processed': booking_results,
-                }
-            }, default=json_default),
-            status=200,
-            content_type='application/json'
-        )
+        return {
+            'success': True,
+            'message': message,
+            'data': {
+                'reserva_id': booking.id,
+                'services_synced': total_services_added,
+                'orders': order_payload,
+                'bookings_processed': booking_results,
+            }
+        }

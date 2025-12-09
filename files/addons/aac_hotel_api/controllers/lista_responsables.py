@@ -230,7 +230,7 @@ class ResponsablesAPIController(http.Controller):
         except ValueError:
             raise ValidationError('Los parámetros limit y offset deben ser números enteros')
 
-    @http.route('/api/v1/responsables', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False)
+    @http.route('/api/v1/responsables', auth='public', type='http', methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_responsables(self, **params):
@@ -305,7 +305,7 @@ class ResponsablesAPIController(http.Controller):
         )
 
     @http.route('/api/v1/responsables/<int:user_id>', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_responsable_detail(self, user_id, **params):
@@ -365,7 +365,7 @@ class ResponsablesAPIController(http.Controller):
         return self._success_response(responsable_data)
 
     @http.route('/api/v1/responsables/search', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def search_responsables(self, **params):
@@ -378,7 +378,7 @@ class ResponsablesAPIController(http.Controller):
         return self.get_responsables(**params)
 
     @http.route('/api/v1/responsables/stats', auth='public', type='http', 
-                methods=['GET', 'OPTIONS'], csrf=False)
+                methods=['GET'], csrf=False)
     @validate_api_key
     @handle_exceptions
     def get_responsables_stats(self, **params):

@@ -1277,7 +1277,7 @@ class HotelApiController(http.Controller):
         
         return domain
 
-    @http.route('/api/hotel/reservas/<int:hotel_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas/<int:hotel_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas_by_hotel_id(self, hotel_id, **kw):
@@ -1305,6 +1305,10 @@ class HotelApiController(http.Controller):
         filters = dict(kw, hotel_id=hotel_id)
         domain = self._build_domain_from_filters(**filters)
         
+        # Excluir reservas canceladas (a menos que se solicite explícitamente)
+        if not kw.get('status_bar') or kw.get('status_bar') != 'cancelled':
+            domain.append(('status_bar', '!=', 'cancelled'))
+        
         # Verificar permisos antes de buscar reservas
         self._check_access_rights('hotel.booking', 'read')
         booking_records = request.env['hotel.booking'].search(domain)
@@ -1325,7 +1329,7 @@ class HotelApiController(http.Controller):
             'data': reservas_list
         })
 
-    @http.route('/api/hotel/reservas/habitacion/<int:room_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas/habitacion/<int:room_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas_by_room_id(self, room_id, **kw):
@@ -1414,6 +1418,10 @@ class HotelApiController(http.Controller):
         filters = {k: v for k, v in kw.items() if k not in ('hotel_id', 'hotel')}
         domain = self._build_domain_from_filters(**filters)
         
+        # Excluir reservas canceladas (a menos que se solicite explícitamente)
+        if not kw.get('status_bar') or kw.get('status_bar') != 'cancelled':
+            domain.append(('status_bar', '!=', 'cancelled'))
+        
         # Agregar filtro de IDs de reservas que tienen esta habitación
         domain = domain + [('id', 'in', booking_ids_with_room)]
         
@@ -1440,7 +1448,7 @@ class HotelApiController(http.Controller):
             'data': reservas_list
         })
 
-    @http.route('/api/hotel/reservas', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reservas', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reservas(self, **kw):
@@ -1580,6 +1588,10 @@ class HotelApiController(http.Controller):
             if other_filters:
                 domain = [('id', '=', -1)]  # ID que no existe, devolverá conjunto vacío
         
+        # Excluir reservas canceladas (a menos que se solicite explícitamente)
+        if not cleaned_kw.get('status_bar') or cleaned_kw.get('status_bar') != 'cancelled':
+            domain.append(('status_bar', '!=', 'cancelled'))
+        
         # Buscar reservas con el dominio completo (incluye todos los filtros)
         booking_records = request.env['hotel.booking'].sudo().search(domain)
         
@@ -1613,7 +1625,7 @@ class HotelApiController(http.Controller):
         
         return self._prepare_response(response_data)
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reserva_by_id(self, reserva_id, **kw):
@@ -1638,7 +1650,7 @@ class HotelApiController(http.Controller):
             'data': self._build_booking_data(booking)
         })
 
-    @http.route('/api/hotel/reserva', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva', auth='public', type='http', methods=['POST'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def create_reserva(self, **kw):
@@ -1799,7 +1811,7 @@ class HotelApiController(http.Controller):
             }
         }, status=201)
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['PUT'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def update_reserva(self, reserva_id, **kw):
@@ -1903,7 +1915,7 @@ class HotelApiController(http.Controller):
             'data': self._build_booking_data(booking)
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['DELETE', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>', auth='public', type='http', methods=['DELETE'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def delete_reserva(self, reserva_id, **kw):
@@ -1962,7 +1974,7 @@ class HotelApiController(http.Controller):
                 'data': self._build_booking_data(booking)
             })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/habitaciones', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/habitaciones', auth='public', type='http', methods=['POST'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def add_rooms_to_reserva(self, reserva_id, **kw):
@@ -2025,7 +2037,7 @@ class HotelApiController(http.Controller):
         })
 
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/estado', auth='public', type='http', methods=['PUT', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/estado', auth='public', type='http', methods=['PUT'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def change_reserva_status(self, reserva_id, **kw):
@@ -2082,23 +2094,8 @@ class HotelApiController(http.Controller):
         
         if new_status in ['confirmed', 'confirm'] and hasattr(booking, 'action_confirm_booking'):
             _logger.info("Ejecutando action_confirm_booking para la reserva %s", reserva_id)
-            
-            # Guardamos las fechas originales para evitar que action_confirm_booking las sobrescriba
-            # con las horas por defecto del hotel (manage_check_in_out_based_on_restime)
-            original_check_in = booking.check_in
-            original_check_out = booking.check_out
-            
             try:
                 booking.action_confirm_booking()
-                
-                # Verificamos si las fechas fueron alteradas y las restauramos si es necesario
-                if booking.check_in != original_check_in or booking.check_out != original_check_out:
-                    _logger.info("Restaurando fechas originales de la reserva %s tras confirmación", reserva_id)
-                    booking.write({
-                        'check_in': original_check_in,
-                        'check_out': original_check_out
-                    })
-                
                 triggered_action = True
                 # Después de la acción tomamos el estado real desde el registro
                 final_status = booking.status_bar
@@ -2131,7 +2128,7 @@ class HotelApiController(http.Controller):
             'data': response_data
         })
     
-    @http.route('/api/hotel/reserva/<int:reserva_id>/send_email', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/send_email', auth='public', type='http', methods=['POST'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def send_reserva_email(self, reserva_id, **kw):
@@ -2195,7 +2192,7 @@ class HotelApiController(http.Controller):
             }
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment', auth='public', type='http', methods=['POST', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment', auth='public', type='http', methods=['POST'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def create_reserva_advance_payment(self, reserva_id, **kw):
@@ -2301,7 +2298,7 @@ class HotelApiController(http.Controller):
             }
         })
 
-    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment/options', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/reserva/<int:reserva_id>/advance_payment/options', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_reserva_advance_payment_options(self, reserva_id, **kw):
@@ -2373,7 +2370,7 @@ class HotelApiController(http.Controller):
             'data': response_payload
         })
 
-    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/hoteles', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_hoteles(self, **kw):
@@ -2399,7 +2396,7 @@ class HotelApiController(http.Controller):
             'data': hotels_list
         })
 
-    @http.route('/api/hotel/habitaciones', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/habitaciones', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_habitaciones(self, **kw):
@@ -2628,7 +2625,7 @@ class HotelApiController(http.Controller):
             'version': '1.0.0'
         })
 
-    @http.route('/api/hotel/gantt/data', auth='public', type='http', methods=['GET', 'OPTIONS'], csrf=False, website=False)
+    @http.route('/api/hotel/gantt/data', auth='public', type='http', methods=['GET'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors
     def get_gantt_data(self, **kw):
