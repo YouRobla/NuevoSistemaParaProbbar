@@ -1306,8 +1306,9 @@ class HotelApiController(http.Controller):
         domain = self._build_domain_from_filters(**filters)
         
         # Excluir reservas canceladas (a menos que se solicite explícitamente)
-        if not kw.get('status_bar') or kw.get('status_bar') != 'cancelled':
-            domain.append(('status_bar', '!=', 'cancelled'))
+        status_bar_param = kw.get('status_bar')
+        if not status_bar_param or status_bar_param not in ['cancel', 'cancelled']:
+            domain.append(('status_bar', 'not in', ['cancel', 'cancelled']))
         
         # Verificar permisos antes de buscar reservas
         self._check_access_rights('hotel.booking', 'read')
@@ -1419,8 +1420,9 @@ class HotelApiController(http.Controller):
         domain = self._build_domain_from_filters(**filters)
         
         # Excluir reservas canceladas (a menos que se solicite explícitamente)
-        if not kw.get('status_bar') or kw.get('status_bar') != 'cancelled':
-            domain.append(('status_bar', '!=', 'cancelled'))
+        status_bar_param = kw.get('status_bar')
+        if not status_bar_param or status_bar_param not in ['cancel', 'cancelled']:
+            domain.append(('status_bar', 'not in', ['cancel', 'cancelled']))
         
         # Agregar filtro de IDs de reservas que tienen esta habitación
         domain = domain + [('id', 'in', booking_ids_with_room)]
@@ -1589,8 +1591,9 @@ class HotelApiController(http.Controller):
                 domain = [('id', '=', -1)]  # ID que no existe, devolverá conjunto vacío
         
         # Excluir reservas canceladas (a menos que se solicite explícitamente)
-        if not cleaned_kw.get('status_bar') or cleaned_kw.get('status_bar') != 'cancelled':
-            domain.append(('status_bar', '!=', 'cancelled'))
+        status_bar_param = cleaned_kw.get('status_bar')
+        if not status_bar_param or status_bar_param not in ['cancel', 'cancelled']:
+            domain.append(('status_bar', 'not in', ['cancel', 'cancelled']))
         
         # Buscar reservas con el dominio completo (incluye todos los filtros)
         booking_records = request.env['hotel.booking'].sudo().search(domain)
