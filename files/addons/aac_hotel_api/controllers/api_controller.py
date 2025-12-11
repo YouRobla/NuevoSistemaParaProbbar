@@ -1877,8 +1877,8 @@ class HotelApiController(http.Controller):
             
             self._validate_status_transition(booking.status_bar, new_status)
             update_vals['status_bar'] = new_status
-            
-# Campos actualizables
+        
+        # Campos actualizables
         updatable_fields = [
             'user_id', 'motivo_viaje', 'description', 'booking_discount',
             'cancellation_reason', 'origin', 'pricelist_id', 'company_id',
@@ -2130,7 +2130,7 @@ class HotelApiController(http.Controller):
             'message': message,
             'data': response_data
         })
-    
+
     @http.route('/api/hotel/reserva/<int:reserva_id>/send_email', auth='public', type='http', methods=['POST'], csrf=False, website=False)
     @validate_api_key
     @handle_api_errors

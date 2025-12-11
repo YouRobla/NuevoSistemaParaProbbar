@@ -2,9 +2,6 @@
 from datetime import datetime, timedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
-import logging
-
-_logger = logging.getLogger(__name__)
 
 
 class ChangeRoomWizard(models.TransientModel):
@@ -118,13 +115,17 @@ class ChangeRoomWizard(models.TransientModel):
         start = booking.check_in.date() if hasattr(booking.check_in, 'date') else booking.check_in
         end = booking.check_out.date() if hasattr(booking.check_out, 'date') else booking.check_out
         
-        # Validación más flexible: permitir extender la fecha de fin
-        if not (start <= self.change_start_date < self.change_end_date):
-            raise ValidationError(_('Change start date must be before change end date and within the original booking period.'))
-        
-        # Permitir extender la fecha de fin más allá de la reserva original
+        # Validación flexible: permite cambios durante o después del período original
+        # PERMITE gaps (días de separación entre reservas)
         if self.change_start_date < start:
             raise ValidationError(_('Change start date cannot be before the original booking start date.'))
+        
+        # Validar que change_start_date < change_end_date (básico)
+        if self.change_start_date >= self.change_end_date:
+            raise ValidationError(_('Change start date must be before change end date.'))
+        
+        # NOTA: NO validamos que change_start_date esté dentro del período original
+        # porque PERMITIMOS cambios después del período original (gaps)
 
         if self.new_room_id == self.current_room_id:
             raise ValidationError(_('Please select a different room.'))
@@ -136,6 +137,42 @@ class ChangeRoomWizard(models.TransientModel):
         # Validar precio personalizado si se usa
         if self.use_custom_price and self.custom_price is False:
             raise ValidationError(_('Please enter a custom price. You can enter 0 if you want the room change to be free.'))
+        
+        # Validar que la hora de check-out de la reserva original no sea mayor que la hora de check-in del cambio
+        # cuando el cambio es en el mismo día
+        if self.change_start_date == booking.check_out.date() if hasattr(booking.check_out, 'date') else booking.check_out:
+            # Obtener hora de check-in del cambio (del contexto o usar hora original de check-in)
+            change_start_hour = self.env.context.get('change_start_hour')
+            change_start_minute = self.env.context.get('change_start_minute')
+            
+            if change_start_hour is not None:
+                # Hora del cambio proporcionada
+                change_hour = int(change_start_hour)
+                change_minute = int(change_start_minute) if change_start_minute is not None else 0
+            elif hasattr(booking.check_in, 'time'):
+                # Usar hora original de check-in
+                change_hour = booking.check_in.hour
+                change_minute = booking.check_in.minute
+            else:
+                change_hour = 0
+                change_minute = 0
+            
+            # Hora de check-out original
+            if hasattr(booking.check_out, 'time'):
+                checkout_hour = booking.check_out.hour
+                checkout_minute = booking.check_out.minute
+                
+                # Calcular minutos totales para comparar
+                checkout_total_minutes = checkout_hour * 60 + checkout_minute
+                change_total_minutes = change_hour * 60 + change_minute
+                
+                # Validar que el check-out sea antes o igual al check-in del cambio
+                if checkout_total_minutes > change_total_minutes:
+                    raise ValidationError(
+                        _('El check-out de la reserva original (%02d:%02d) no puede ser después de la hora del cambio (%02d:%02d). '
+                          'Por favor, ajuste la hora del cambio o el check-out de la reserva original.') % 
+                        (checkout_hour, checkout_minute, change_hour, change_minute)
+                    )
 
     def _is_room_available(self, room, start_date, end_date):
         # Check overlapping booking lines using the same room (simple availability check)
@@ -204,19 +241,69 @@ class ChangeRoomWizard(models.TransientModel):
         # Obtener el estado original del booking actual (antes de cualquier cambio)
         original_status = self.env.context.get('original_status') or booking.status_bar or 'initial'
         
+        # NUEVA LÓGICA: Si se proporciona checkout explícito, usarlo directamente
+        use_explicit_checkout = self.env.context.get('use_explicit_checkout', False)
+        explicit_current_checkout = self.env.context.get('explicit_current_checkout')
+        
         # Verificar consistencia
         total_original_nights = (end - start).days
         original_nights = original_days if original_days > 0 else 0
         change_nights = (change_end - change_start).days
         if original_days > 0:
-            # Crear datetime para original_end_date manteniendo la hora original
-            new_checkout = fields.Datetime.to_datetime(original_end_date)
-            if hasattr(booking.check_out, 'time') and new_checkout:
-                new_checkout = new_checkout.replace(
-                    hour=booking.check_out.hour, 
-                    minute=booking.check_out.minute, 
-                    second=booking.check_out.second
-                )
+            # Si se proporciona checkout explícito, usarlo directamente (LÓGICA DIRECTA)
+            if use_explicit_checkout and explicit_current_checkout:
+                new_checkout = explicit_current_checkout
+                # Asegurar que sea datetime
+                if not isinstance(new_checkout, datetime):
+                    new_checkout = fields.Datetime.to_datetime(new_checkout)
+            else:
+                # LÓGICA ANTIGUA: Calcular checkout automáticamente
+                # Crear datetime para original_end_date
+                new_checkout = fields.Datetime.to_datetime(original_end_date)
+                
+                # Obtener la hora de check-in del cambio (si se proporcionó)
+                change_start_hour = self.env.context.get('change_start_hour')
+                change_start_minute = self.env.context.get('change_start_minute')
+                
+                # Determinar la hora de check-out de la reserva original
+                # DEBE ser ANTES o IGUAL a la hora de check-in del cambio
+                if hasattr(booking.check_out, 'time') and new_checkout:
+                    # Calcular la hora de check-in del cambio
+                    if change_start_hour is not None:
+                        # Hora del cambio proporcionada en el contexto
+                        change_checkin_hour = int(change_start_hour)
+                        change_checkin_minute = int(change_start_minute) if change_start_minute is not None else 0
+                    elif hasattr(booking.check_in, 'time'):
+                        # Usar hora original de check-in
+                        change_checkin_hour = booking.check_in.hour
+                        change_checkin_minute = booking.check_in.minute
+                    else:
+                        change_checkin_hour = 0
+                        change_checkin_minute = 0
+                    
+                    # Hora de check-out original
+                    original_checkout_hour = booking.check_out.hour
+                    original_checkout_minute = booking.check_out.minute
+                    
+                    # Calcular minutos totales para comparar
+                    checkout_total_minutes = original_checkout_hour * 60 + original_checkout_minute
+                    change_total_minutes = change_checkin_hour * 60 + change_checkin_minute
+                    
+                    # Si la hora original de check-out es MAYOR que la hora del cambio, usar la hora del cambio
+                    if checkout_total_minutes > change_total_minutes:
+                        # Ajustar a la hora del cambio
+                        new_checkout = new_checkout.replace(
+                            hour=change_checkin_hour,
+                            minute=change_checkin_minute,
+                            second=0
+                        )
+                    else:
+                        # Usar la hora original si es menor o igual
+                        new_checkout = new_checkout.replace(
+                            hour=original_checkout_hour, 
+                            minute=original_checkout_minute, 
+                            second=booking.check_out.second
+                        )
             
             # Determinar el estado a usar según preserve_original_status del contexto
             if preserve_original_status:
@@ -261,27 +348,24 @@ class ChangeRoomWizard(models.TransientModel):
             price_unit = self.new_room_id.list_price or line.price or 0.0
         
         # Crear datetimes para la nueva reserva
-        # Prioridad: horas del contexto (enviadas desde API) > horas de la reserva original
+        # Usar horas del contexto si están disponibles, sino usar horas originales
         new_checkin = fields.Datetime.to_datetime(change_start)
         if not new_checkin:
             raise UserError(_('Error: No se pudo convertir la fecha de inicio a datetime.'))
         
-        # Obtener horas del contexto si están disponibles (enviadas desde el API)
+        # Obtener horas del contexto o usar las originales
         change_start_hour = self.env.context.get('change_start_hour')
         change_start_minute = self.env.context.get('change_start_minute')
-        change_end_hour = self.env.context.get('change_end_hour')
-        change_end_minute = self.env.context.get('change_end_minute')
         
-        # Usar horas del contexto si están disponibles, sino usar horas de la reserva original
-        if change_start_hour is not None and change_start_minute is not None:
-            # Usar horas enviadas desde el API
+        if change_start_hour is not None and new_checkin:
+            # Usar horas proporcionadas en el contexto
             new_checkin = new_checkin.replace(
-                hour=change_start_hour,
-                minute=change_start_minute,
+                hour=int(change_start_hour),
+                minute=int(change_start_minute) if change_start_minute is not None else 0,
                 second=0
             )
-        elif hasattr(booking.check_in, 'time') and isinstance(booking.check_in, datetime):
-            # Fallback: usar horas de la reserva original
+        elif hasattr(booking.check_in, 'time') and new_checkin:
+            # Usar horas originales si no se proporcionaron
             new_checkin = new_checkin.replace(
                 hour=booking.check_in.hour,
                 minute=booking.check_in.minute, 
@@ -292,16 +376,19 @@ class ChangeRoomWizard(models.TransientModel):
         if not new_checkout_end:
             raise UserError(_('Error: No se pudo convertir la fecha de fin a datetime.'))
         
-        # Usar horas del contexto si están disponibles, sino usar horas de la reserva original
-        if change_end_hour is not None and change_end_minute is not None:
-            # Usar horas enviadas desde el API
+        # Obtener horas del contexto o usar las originales
+        change_end_hour = self.env.context.get('change_end_hour')
+        change_end_minute = self.env.context.get('change_end_minute')
+        
+        if change_end_hour is not None and new_checkout_end:
+            # Usar horas proporcionadas en el contexto
             new_checkout_end = new_checkout_end.replace(
-                hour=change_end_hour,
-                minute=change_end_minute,
+                hour=int(change_end_hour),
+                minute=int(change_end_minute) if change_end_minute is not None else 0,
                 second=0
             )
-        elif hasattr(booking.check_out, 'time') and isinstance(booking.check_out, datetime):
-            # Fallback: usar horas de la reserva original
+        elif hasattr(booking.check_out, 'time') and new_checkout_end:
+            # Usar horas originales si no se proporcionaron
             new_checkout_end = new_checkout_end.replace(
                 hour=booking.check_out.hour,
                 minute=booking.check_out.minute,
@@ -436,13 +523,6 @@ class ChangeRoomWizard(models.TransientModel):
         # porque las órdenes pueden contener referencias a los servicios
         
         sale_orders = self.env['sale.order'].search([('booking_id', '=', booking.id)])
-        
-        # FIX: Asegurar que encontramos la orden incluso si el search falla pero está vinculada
-        if not sale_orders and booking.order_id:
-            _logger.info('Orden de venta no encontrada por búsqueda inversa, usando booking.order_id: %s', booking.order_id.name)
-            sale_orders = booking.order_id
-            
-        _logger.info('Órdenes de venta encontradas para transferir: %s', sale_orders.ids)
         if sale_orders:
             # ESTRATEGIA: Transferir toda la facturación a la nueva reserva
             # Esto mantiene la facturación unificada y evita confusiones

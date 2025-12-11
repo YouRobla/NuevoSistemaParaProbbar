@@ -140,15 +140,15 @@ class ChangeRoomApiController(http.Controller):
         """
         Ejecutar el cambio de habitación con los parámetros enviados desde el frontend.
         
-        Acepta fechas con o sin horas:
+        NUEVA LÓGICA DIRECTA (Recomendada):
+        El gerente especifica explícitamente:
+        - current_booking_checkout: "2024-11-12 11:00:00" (checkout de la reserva actual)
+        - new_booking_checkin: "2024-11-12 14:00:00" (checkin de la nueva reserva)
+        - new_booking_checkout: "2024-11-15 11:00:00" (checkout de la nueva reserva)
+        
+        LÓGICA ANTIGUA (Sigue funcionando para compatibilidad):
         - change_start_date: "2024-01-15" o "2024-01-15 14:00:00"
         - change_end_date: "2024-01-20" o "2024-01-20 11:00:00"
-        
-        O también puede recibir:
-        - change_start_datetime: "2024-01-15T14:00:00" (ISO datetime)
-        - change_end_datetime: "2024-01-20T11:00:00" (ISO datetime)
-        
-        Si se proporcionan horas, se usarán. Si no, se usarán las horas de la reserva original.
         """
         payload = request.get_json_data() or {}
         line_id = payload.get('booking_line_id')
@@ -157,12 +157,61 @@ class ChangeRoomApiController(http.Controller):
         new_room_id = payload.get('new_room_id')
         if not new_room_id:
             raise UserError('Debe proporcionar new_room_id.')
+        
+        # NUEVA LÓGICA: Campos explícitos y directos
+        current_booking_checkout = payload.get('current_booking_checkout')
+        new_booking_checkin = payload.get('new_booking_checkin')
+        new_booking_checkout = payload.get('new_booking_checkout')
+        
+        # Si se usan los campos explícitos, usar esa lógica
+        if current_booking_checkout and new_booking_checkin and new_booking_checkout:
+            # LÓGICA DIRECTA: Usar fechas/horas explícitas
+            try:
+                current_checkout_dt = self._parse_datetime_or_date(current_booking_checkout, 'current_booking_checkout')
+                new_checkin_dt = self._parse_datetime_or_date(new_booking_checkin, 'new_booking_checkin')
+                new_checkout_dt = self._parse_datetime_or_date(new_booking_checkout, 'new_booking_checkout')
+                
+                # Validar que sean datetime
+                if not isinstance(current_checkout_dt, datetime):
+                    current_checkout_dt = fields.Datetime.to_datetime(current_checkout_dt)
+                if not isinstance(new_checkin_dt, datetime):
+                    new_checkin_dt = fields.Datetime.to_datetime(new_checkin_dt)
+                if not isinstance(new_checkout_dt, datetime):
+                    new_checkout_dt = fields.Datetime.to_datetime(new_checkout_dt)
+                
+                # Validar orden lógico
+                if new_checkin_dt < current_checkout_dt:
+                    raise UserError('El check-in de la nueva reserva debe ser igual o después del check-out de la reserva actual.')
+                
+                if new_checkout_dt <= new_checkin_dt:
+                    raise UserError('El check-out de la nueva reserva debe ser después del check-in.')
+                
+                # Extraer fechas y horas para nueva reserva
+                change_start_date = new_checkin_dt.date()
+                change_end_date = new_checkout_dt.date()
+                change_start_hour = new_checkin_dt.hour
+                change_start_minute = new_checkin_dt.minute
+                change_end_hour = new_checkout_dt.hour
+                change_end_minute = new_checkout_dt.minute
+                
+                # Guardar checkout explícito para pasarlo al wizard en el contexto
+                explicit_current_checkout = current_checkout_dt
+                
+                # Marcar que usamos lógica explícita
+                use_explicit_logic = True
+                
+            except Exception as e:
+                raise UserError(f'Error procesando fechas explícitas: {str(e)}')
+        else:
+            # LÓGICA ANTIGUA: Compatibilidad con formato anterior
+            explicit_current_checkout = None
+            use_explicit_logic = False
 
-        # Aceptar fechas con o sin horas
-        # Prioridad: horas separadas > change_start_datetime > change_start_date
-        # También aceptar horas separadas directamente (check_in_hour, check_in_minute, etc.)
-        start_datetime_str = payload.get('change_start_datetime') or payload.get('change_start_date')
-        end_datetime_str = payload.get('change_end_datetime') or payload.get('change_end_date')
+            # Aceptar fechas con o sin horas
+            # Prioridad: horas separadas > change_start_datetime > change_start_date
+            # También aceptar horas separadas directamente (check_in_hour, check_in_minute, etc.)
+            start_datetime_str = payload.get('change_start_datetime') or payload.get('change_start_date')
+            end_datetime_str = payload.get('change_end_datetime') or payload.get('change_end_date')
         
         # Verificar si se proporcionaron horas separadas
         check_in_hour = payload.get('check_in_hour')
@@ -223,41 +272,41 @@ class ChangeRoomApiController(http.Controller):
             )
             end_datetime_str = end_datetime.strftime('%Y-%m-%d %H:%M:%S')
         
-        if not start_datetime_str or not end_datetime_str:
-            raise UserError('Debe proporcionar change_start_date/change_start_datetime y change_end_date/change_end_datetime, o fechas con check_in_hour/check_out_hour.')
+            if not start_datetime_str or not end_datetime_str:
+                raise UserError('Debe proporcionar change_start_date/change_start_datetime y change_end_date/change_end_datetime, o fechas con check_in_hour/check_out_hour.')
 
-        # Parsear fechas/horas
-        start_datetime = self._parse_datetime_or_date(start_datetime_str, 'change_start')
-        end_datetime = self._parse_datetime_or_date(end_datetime_str, 'change_end')
-        
-        # Extraer fecha y hora si es datetime, o solo fecha si es date
-        if isinstance(start_datetime, datetime):
-            change_start_date = start_datetime.date()
-            change_start_hour = start_datetime.hour
-            change_start_minute = start_datetime.minute
-        else:
-            change_start_date = start_datetime
-            # Si no hay hora en datetime pero se proporcionaron horas separadas, usarlas
-            if check_in_hour is not None:
-                change_start_hour = int(check_in_hour)
-                change_start_minute = int(check_in_minute) if check_in_minute is not None else 0
+            # Parsear fechas/horas
+            start_datetime = self._parse_datetime_or_date(start_datetime_str, 'change_start')
+            end_datetime = self._parse_datetime_or_date(end_datetime_str, 'change_end')
+            
+            # Extraer fecha y hora si es datetime, o solo fecha si es date
+            if isinstance(start_datetime, datetime):
+                change_start_date = start_datetime.date()
+                change_start_hour = start_datetime.hour
+                change_start_minute = start_datetime.minute
             else:
-                change_start_hour = None
-                change_start_minute = None
-        
-        if isinstance(end_datetime, datetime):
-            change_end_date = end_datetime.date()
-            change_end_hour = end_datetime.hour
-            change_end_minute = end_datetime.minute
-        else:
-            change_end_date = end_datetime
-            # Si no hay hora en datetime pero se proporcionaron horas separadas, usarlas
-            if check_out_hour is not None:
-                change_end_hour = int(check_out_hour)
-                change_end_minute = int(check_out_minute) if check_out_minute is not None else 0
+                change_start_date = start_datetime
+                # Si no hay hora en datetime pero se proporcionaron horas separadas, usarlas
+                if check_in_hour is not None:
+                    change_start_hour = int(check_in_hour)
+                    change_start_minute = int(check_in_minute) if check_in_minute is not None else 0
+                else:
+                    change_start_hour = None
+                    change_start_minute = None
+            
+            if isinstance(end_datetime, datetime):
+                change_end_date = end_datetime.date()
+                change_end_hour = end_datetime.hour
+                change_end_minute = end_datetime.minute
             else:
-                change_end_hour = None
-                change_end_minute = None
+                change_end_date = end_datetime
+                # Si no hay hora en datetime pero se proporcionaron horas separadas, usarlas
+                if check_out_hour is not None:
+                    change_end_hour = int(check_out_hour)
+                    change_end_minute = int(check_out_minute) if check_out_minute is not None else 0
+                else:
+                    change_end_hour = None
+                    change_end_minute = None
 
         use_custom_price = bool(payload.get('use_custom_price'))
         custom_price = payload.get('custom_price') if use_custom_price else False
@@ -270,6 +319,9 @@ class ChangeRoomApiController(http.Controller):
             'change_start_minute': change_start_minute,
             'change_end_hour': change_end_hour,
             'change_end_minute': change_end_minute,
+            # Si se usa lógica explícita, pasar el checkout explícito
+            'explicit_current_checkout': explicit_current_checkout,
+            'use_explicit_checkout': bool(explicit_current_checkout),
         }
         wizard_vals = {
             'booking_id': booking.id,
