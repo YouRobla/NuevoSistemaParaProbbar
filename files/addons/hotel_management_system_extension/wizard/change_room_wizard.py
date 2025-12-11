@@ -252,10 +252,26 @@ class ChangeRoomWizard(models.TransientModel):
         if original_days > 0:
             # Si se proporciona checkout explícito, usarlo directamente (LÓGICA DIRECTA)
             if use_explicit_checkout and explicit_current_checkout:
-                new_checkout = explicit_current_checkout
-                # Asegurar que sea datetime
+                # El contexto pasa datetime como string, convertir a datetime
+                if isinstance(explicit_current_checkout, str):
+                    # Convertir string a datetime preservando la hora exacta
+                    new_checkout = fields.Datetime.from_string(explicit_current_checkout)
+                    # Verificar que la conversión preservó la hora
+                    if not isinstance(new_checkout, datetime):
+                        # Si no es datetime, intentar parsearlo manualmente
+                        try:
+                            from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
+                            new_checkout = datetime.strptime(explicit_current_checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+                        except:
+                            new_checkout = fields.Datetime.from_string(explicit_current_checkout)
+                elif isinstance(explicit_current_checkout, datetime):
+                    new_checkout = explicit_current_checkout
+                else:
+                    new_checkout = fields.Datetime.to_datetime(explicit_current_checkout)
+                
+                # Asegurar que new_checkout es un datetime válido con hora preservada
                 if not isinstance(new_checkout, datetime):
-                    new_checkout = fields.Datetime.to_datetime(new_checkout)
+                    raise UserError(_('Error: No se pudo convertir el checkout explícito a datetime.'))
             else:
                 # LÓGICA ANTIGUA: Calcular checkout automáticamente
                 # Crear datetime para original_end_date
@@ -314,9 +330,18 @@ class ChangeRoomWizard(models.TransientModel):
                 status_to_use = 'checkin'
             
             # Actualizar la reserva original para que termine antes del cambio
-            booking.with_context(skip_room_validation=True).write({
+            # IMPORTANTE: Usar write directo sin pasar por métodos que puedan resetear horas
+            # Convertir datetime a string para asegurar que se preserve la hora exacta
+            checkout_str = fields.Datetime.to_string(new_checkout) if isinstance(new_checkout, datetime) else str(new_checkout)
+            
+            # Usar contexto para evitar que se ejecuten métodos que reseteen las horas
+            booking.with_context(
+                skip_room_validation=True,
+                skip_time_management=True,  # Evitar que manage_check_in_out_based_on_restime() resetee horas
+                preserve_explicit_times=True  # Marcar que estamos usando horas explícitas
+            ).write({
                 'status_bar': status_to_use,
-                'check_out': new_checkout
+                'check_out': checkout_str  # Escribir como string para preservar hora exacta
             })
             # NOTA: No actualizamos booking_days manualmente porque es un campo computado
             # que se recalcula automáticamente basándose en check_in y check_out del booking

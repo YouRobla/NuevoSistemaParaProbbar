@@ -320,7 +320,8 @@ class ChangeRoomApiController(http.Controller):
             'change_end_hour': change_end_hour,
             'change_end_minute': change_end_minute,
             # Si se usa lógica explícita, pasar el checkout explícito
-            'explicit_current_checkout': explicit_current_checkout,
+            # Convertir datetime a string para pasarlo por contexto (Odoo no pasa objetos datetime directamente)
+            'explicit_current_checkout': fields.Datetime.to_string(explicit_current_checkout) if explicit_current_checkout else None,
             'use_explicit_checkout': bool(explicit_current_checkout),
         }
         wizard_vals = {
