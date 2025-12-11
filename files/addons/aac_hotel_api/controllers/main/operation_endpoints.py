@@ -133,6 +133,9 @@ class OperationEndpoints:
         # Eliminar campos de hora del payload para que no fallen en el write/action
         # ya que estos campos son computados o no existen directamente para escritura simple en algunos contextos
         # y nosotros los manejamos manualmente al final
+        # Eliminar campos de hora del payload para que no fallen en el write/action
+        # ya que estos campos son computados o no existen directamente para escritura simple en algunos contextos
+        # y nosotros los manejamos manualmente al final
         for field_to_pop in ['check_in_hour', 'check_in_minute', 'check_out_hour', 'check_out_minute']:
             data.pop(field_to_pop, None)
 
