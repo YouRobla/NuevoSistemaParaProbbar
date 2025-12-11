@@ -176,8 +176,6 @@ class OperationEndpoints:
                 time(hour=target_in_h, minute=target_in_m)
             )
             time_updates['check_in'] = fields.Datetime.to_string(new_check_in)
-            time_updates['check_in_hour'] = target_in_h
-            time_updates['check_in_minute'] = target_in_m
 
         # Actualizar Check-out
         if booking.check_out:
@@ -190,8 +188,6 @@ class OperationEndpoints:
                 time(hour=target_out_h, minute=target_out_m)
             )
             time_updates['check_out'] = fields.Datetime.to_string(new_check_out)
-            time_updates['check_out_hour'] = target_out_h
-            time_updates['check_out_minute'] = target_out_m
 
         if time_updates:
             booking.write(time_updates)
