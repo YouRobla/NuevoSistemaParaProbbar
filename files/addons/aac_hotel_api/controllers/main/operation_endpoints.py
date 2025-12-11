@@ -107,23 +107,28 @@ class OperationEndpoints:
         self._validate_status_transition(booking.status_bar, new_status)
 
         # Capturar horas actuales o del payload antes de que el cambio de estado las resetee
-        current_check_in_hour = booking.check_in_hour if booking.check_in else 0
-        current_check_in_minute = booking.check_in_minute if booking.check_in else 0
-        current_check_out_hour = booking.check_out_hour if booking.check_out else 0
-        current_check_out_minute = booking.check_out_minute if booking.check_out else 0
+        # Aseguramos conversion a int para evitar errores en datetime.time combinados con float
+        try:
+            cur_in_h = int(booking.check_in_hour) if booking.check_in and booking.check_in_hour else 0
+            cur_in_m = int(booking.check_in_minute) if booking.check_in and booking.check_in_minute else 0
+            cur_out_h = int(booking.check_out_hour) if booking.check_out and booking.check_out_hour else 0
+            cur_out_m = int(booking.check_out_minute) if booking.check_out and booking.check_out_minute else 0
+        except Exception:
+            _logger.warning("Error getting current hours from booking %s", reserva_id)
+            cur_in_h, cur_in_m, cur_out_h, cur_out_m = 15, 0, 12, 0 # Fallback
 
         # Prioridad: Payload > Base de datos
-        c_in_h = data.get("check_in_hour")
-        target_in_h = int(c_in_h) if c_in_h is not None else current_check_in_hour
-        
-        c_in_m = data.get("check_in_minute")
-        target_in_m = int(c_in_m) if c_in_m is not None else current_check_in_minute
+        def _parse_int(val, default):
+            try:
+                parsed = int(val) if val is not None else default
+                return parsed
+            except (ValueError, TypeError):
+                return default
 
-        c_out_h = data.get("check_out_hour")
-        target_out_h = int(c_out_h) if c_out_h is not None else current_check_out_hour
-
-        c_out_m = data.get("check_out_minute")
-        target_out_m = int(c_out_m) if c_out_m is not None else current_check_out_minute
+        target_in_h = _parse_int(data.get("check_in_hour"), cur_in_h)
+        target_in_m = _parse_int(data.get("check_in_minute"), cur_in_m)
+        target_out_h = _parse_int(data.get("check_out_hour"), cur_out_h)
+        target_out_m = _parse_int(data.get("check_out_minute"), cur_out_m)
 
         old_status = booking.status_bar
         final_status = new_status
