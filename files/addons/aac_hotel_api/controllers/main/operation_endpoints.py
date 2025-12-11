@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import datetime
+from datetime import datetime, time
 from odoo import http, fields, _
 from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
@@ -106,6 +106,25 @@ class OperationEndpoints:
         self._validate_booking_status(new_status)
         self._validate_status_transition(booking.status_bar, new_status)
 
+        # Capturar horas actuales o del payload antes de que el cambio de estado las resetee
+        current_check_in_hour = booking.check_in_hour if booking.check_in else 0
+        current_check_in_minute = booking.check_in_minute if booking.check_in else 0
+        current_check_out_hour = booking.check_out_hour if booking.check_out else 0
+        current_check_out_minute = booking.check_out_minute if booking.check_out else 0
+
+        # Prioridad: Payload > Base de datos
+        c_in_h = data.get("check_in_hour")
+        target_in_h = int(c_in_h) if c_in_h is not None else current_check_in_hour
+        
+        c_in_m = data.get("check_in_minute")
+        target_in_m = int(c_in_m) if c_in_m is not None else current_check_in_minute
+
+        c_out_h = data.get("check_out_hour")
+        target_out_h = int(c_out_h) if c_out_h is not None else current_check_out_hour
+
+        c_out_m = data.get("check_out_minute")
+        target_out_m = int(c_out_m) if c_out_m is not None else current_check_out_minute
+
         old_status = booking.status_bar
         final_status = new_status
         triggered_action = False
@@ -126,6 +145,42 @@ class OperationEndpoints:
                 raise ValueError(f"No se pudo confirmar la reserva: {str(exc)}")
         else:
             booking.write({"status_bar": new_status})
+
+        # Restaurar/Actualizar horas después del cambio de estado (que podría haberlas reseteado a 12:00)
+        time_updates = {}
+        
+        # Actualizar Check-in
+        if booking.check_in:
+            # Usar la fecha que quedó después del cambio de estado (pero corregir la hora)
+            # Nota: Odoo devuelve datetime, convertimos a date para combinar
+            check_in_obj = booking.check_in
+            if isinstance(check_in_obj, str):
+                check_in_obj = fields.Datetime.from_string(check_in_obj)
+            
+            new_check_in = datetime.combine(
+                check_in_obj.date(),
+                time(hour=target_in_h, minute=target_in_m)
+            )
+            time_updates['check_in'] = fields.Datetime.to_string(new_check_in)
+            time_updates['check_in_hour'] = target_in_h
+            time_updates['check_in_minute'] = target_in_m
+
+        # Actualizar Check-out
+        if booking.check_out:
+            check_out_obj = booking.check_out
+            if isinstance(check_out_obj, str):
+                check_out_obj = fields.Datetime.from_string(check_out_obj)
+                
+            new_check_out = datetime.combine(
+                check_out_obj.date(),
+                time(hour=target_out_h, minute=target_out_m)
+            )
+            time_updates['check_out'] = fields.Datetime.to_string(new_check_out)
+            time_updates['check_out_hour'] = target_out_h
+            time_updates['check_out_minute'] = target_out_m
+
+        if time_updates:
+            booking.write(time_updates)
 
         _logger.info(
             "Estado de reserva %s cambiado de '%s' a '%s'",
