@@ -238,13 +238,17 @@ class BatchReservationsController(http.Controller):
                     'partner_id': partner_id,
                 })]
             
+            # Convertir strings de fecha a datetime para evitar conversión UTC
+            check_in_dt = self._parse_datetime(segment['check_in'])
+            check_out_dt = self._parse_datetime(segment['check_out'])
+            
             # Preparar valores de la reserva
             booking_vals = {
                 'partner_id': partner_id,
                 'user_id': user_id,
                 'hotel_id': hotel_id,
-                'check_in': segment['check_in'],
-                'check_out': segment['check_out'],
+                'check_in': check_in_dt,  # Datetime naive → Sin conversión UTC
+                'check_out': check_out_dt,  # Datetime naive → Sin conversión UTC
                 'motivo_viaje': motivo_viaje,
                 'status_bar': 'initial',
                 'booking_line_ids': [(0, 0, {
@@ -298,12 +302,16 @@ class BatchReservationsController(http.Controller):
                 'partner_id': partner_id,
             })]
 
+        # Convertir strings de fecha a datetime para evitar conversión UTC
+        check_in_dt = self._parse_datetime(segment['check_in'])
+        check_out_dt = self._parse_datetime(segment['check_out'])
+
         booking = Booking.create({
             'partner_id': partner_id,
             'user_id': user_id,
             'hotel_id': hotel_id,
-            'check_in': segment['check_in'],
-            'check_out': segment['check_out'],
+            'check_in': check_in_dt,  # Datetime naive → Sin conversión UTC
+            'check_out': check_out_dt,  # Datetime naive → Sin conversión UTC
             'motivo_viaje': motivo_viaje,
             'status_bar': 'initial',
             'booking_line_ids': [(0, 0, {
