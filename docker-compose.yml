@@ -16,8 +16,13 @@ services:
     networks:
       - odoonet
     labels:
-      # Aplicar middleware CORS desde file provider (middlewares.yml)
-      - "traefik.http.routers.web-odoohotelfullproyect-odoo17-pt92aa.middlewares=cors-headers@file"
+      # Habilitar Traefik para este servicio
+      - "traefik.enable=true"
+      # Aplicar middleware CORS desde file provider
+      - "traefik.http.middlewares.odoo-cors-custom.headers.accesscontrolalloworiginlist=*"
+      - "traefik.http.middlewares.odoo-cors-custom.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.odoo-cors-custom.headers.accesscontrolallowheaders=content-type,x-api-key,authorization,accept"
+      - "traefik.http.middlewares.odoo-cors-custom.headers.accesscontrolmaxage=86400"
 
   db:
     image: postgres:15
