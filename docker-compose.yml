@@ -18,10 +18,12 @@ services:
     labels:
       # CORS Middleware para Traefik (Dokploy)
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
-      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowheaders=Content-Type,X-API-Key,Authorization"
+      - "traefik.http.middlewares.odoo-cors.headers.accesscontrolallowheaders=Content-Type,X-API-Key,Authorization,Accept"
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolalloworiginlist=*"
       - "traefik.http.middlewares.odoo-cors.headers.accesscontrolmaxage=86400"
       - "traefik.http.middlewares.odoo-cors.headers.addvaryheader=true"
+      # CRÍTICO: Activar el middleware en el router
+      - "traefik.http.routers.odoo-web.middlewares=odoo-cors"
 
   db:
     image: postgres:15
