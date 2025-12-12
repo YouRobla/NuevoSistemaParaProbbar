@@ -15,9 +15,7 @@ services:
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
     networks:
       - odoonet
-    labels:
-      # Usar middlewares desde Traefik file provider (Dokploy)
-      - "traefik.http.routers.odoo-web.middlewares=redirect-to-https@file,cors-headers@file"
+    # SIN labels - Dokploy y Traefik manejan todo desde sus configuraciones
 
   db:
     image: postgres:15
