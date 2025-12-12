@@ -24,10 +24,25 @@ def validate_api_key(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         # ==========================================
+        # LOGGING: Para debug de CORS
+        # ==========================================
+        method = request.httprequest.method
+        path = request.httprequest.path
+        origin = request.httprequest.headers.get('Origin', 'NO-ORIGIN')
+        
+        _logger.info(
+            "🔍 [CORS DEBUG] Petición recibida: %s %s | Origin: %s | Endpoint: %s",
+            method, path, origin, func.__name__
+        )
+        
+        # ==========================================
         # CORS PREFLIGHT: Permitir OPTIONS sin autenticación
         # ==========================================
-        if request.httprequest.method == 'OPTIONS':
-            _logger.debug("Petición OPTIONS detectada, respondiendo sin validación de API key")
+        if method == 'OPTIONS':
+            _logger.info(
+                "✅ [CORS] Petición OPTIONS detectada - Respondiendo sin validación | Path: %s | Origin: %s",
+                path, origin
+            )
             return Response(
                 '',
                 status=200,

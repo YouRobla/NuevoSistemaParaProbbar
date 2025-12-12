@@ -53,6 +53,7 @@ class ListaHotelesController(http.Controller):
         Returns:
             Response: JSON con la lista de hoteles o mensaje de error
         """
+        _logger.info("📋 [ENDPOINT] get_hoteles ejecutándose - API key validada correctamente")
         try:
             hoteles = request.env['hotel.hotels'].search_read(
                 [], 
