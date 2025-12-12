@@ -13,7 +13,7 @@
     'website': "https://consulting-sac.com.pe/",
 
     'category': 'Uncategorized',
-    'version': '17.0',
+    'version': '17.0.1',
 
     'depends': [
         'base',
