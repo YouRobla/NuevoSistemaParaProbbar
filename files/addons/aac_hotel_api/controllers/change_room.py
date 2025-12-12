@@ -186,6 +186,18 @@ class ChangeRoomApiController(http.Controller):
                 if new_checkout_dt <= new_checkin_dt:
                     raise UserError('El check-out de la nueva reserva debe ser después del check-in.')
                 
+                # Validar que no se extienda la reserva mediante cambio de habitación
+                original_checkout = booking.check_out
+                if isinstance(original_checkout, str):
+                    original_checkout = fields.Datetime.from_string(original_checkout)
+                
+                if new_checkout_dt > original_checkout:
+                    raise UserError(
+                        f'El check-out de la nueva reserva ({new_checkout_dt.strftime("%Y-%m-%d %H:%M")}) '
+                        f'no puede ser posterior al check-out original ({original_checkout.strftime("%Y-%m-%d %H:%M")}). '
+                        f'Para extender la reserva, use la función de extensión de reserva.'
+                    )
+                
                 # Extraer fechas y horas para nueva reserva
                 change_start_date = new_checkin_dt.date()
                 change_end_date = new_checkout_dt.date()
