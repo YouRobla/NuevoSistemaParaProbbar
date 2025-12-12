@@ -15,7 +15,9 @@ services:
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
     networks:
       - odoonet
-    # SIN labels - Dokploy y Traefik manejan todo desde sus configuraciones
+    labels:
+      # Aplicar middleware CORS desde file provider (middlewares.yml)
+      - "traefik.http.routers.web-odoohotelfullproyect-odoo17-pt92aa.middlewares=cors-headers@file"
 
   db:
     image: postgres:15
