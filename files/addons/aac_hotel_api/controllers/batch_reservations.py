@@ -276,11 +276,6 @@ class BatchReservationsController(http.Controller):
             created_reservations.append(current_booking)
             previous_booking = current_booking
         
-        # Marcar que todas tienen cambio de habitación
-        for booking in created_reservations:
-            if not booking.has_room_change:
-                booking.write({'has_room_change': True})
-        
         _logger.info(f"✅ Created {len(created_reservations)} linked reservations")
         return created_reservations
 
