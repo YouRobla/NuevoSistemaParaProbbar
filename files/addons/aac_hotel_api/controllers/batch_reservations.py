@@ -70,10 +70,11 @@ class BatchReservationsController(http.Controller):
     @validate_api_key
     def create_batch_reservations(self, **kwargs):
         """
-        Crea múltiples reservas de forma inteligente.
+        Crea múltiples reservas vinculadas mediante change_room.
         
-        Detecta automáticamente si los segmentos son consecutivos y usa
-        la estrategia de change_room para mantenerlos vinculados.
+        IMPORTANTE: TODOS los segmentos se vinculan entre sí, sin importar
+        cuántos días haya entre ellos. Esto permite crear reservas con gaps
+        (ej: 15-17 Enero, 25-27 Enero) que quedan conectadas.
         """
         # Manejar preflight OPTIONS
         if request.httprequest.method == 'OPTIONS':
@@ -173,70 +174,25 @@ class BatchReservationsController(http.Controller):
 
     def _analyze_segments(self, segments):
         """
-        Analiza los segmentos y los agrupa por consecutividad.
+        Analiza los segmentos - SIEMPRE los trata como un grupo vinculado.
+        
+        No importa cuántos días haya entre segmentos, todos se vinculan.
         
         Returns:
             [
                 {
                     'type': 'consecutive',
-                    'segments': [seg1, seg2, seg3],
-                    'count': 3
-                },
-                {
-                    'type': 'separate',
-                    'segments': [seg4],
-                    'count': 1
+                    'segments': [seg1, seg2, seg3, ...],
+                    'count': N
                 }
             ]
         """
-        groups = []
-        current_group = []
-
-        for i, segment in enumerate(segments):
-            current_group.append(segment)
-
-            # Verificar si el siguiente es consecutivo
-            if i < len(segments) - 1:
-                next_segment = segments[i + 1]
-
-                try:
-                    current_checkout = self._parse_datetime(segment['check_out'])
-                    next_checkin = self._parse_datetime(next_segment['check_in'])
-
-                    # Consecutivo si mismo día o diferencia <= 1 día
-                    diff = (next_checkin.date() - current_checkout.date()).days
-                    is_consecutive = diff <= 1
-
-                    if not is_consecutive:
-                        # Cerrar grupo actual
-                        group_type = 'consecutive' if len(current_group) > 1 else 'separate'
-                        groups.append({
-                            'type': group_type,
-                            'segments': current_group[:],
-                            'count': len(current_group)
-                        })
-                        current_group = []
-
-                except Exception as e:
-                    _logger.warning(f"⚠️ Error parsing dates: {e}")
-                    # Si hay error, considerar como no consecutivo
-                    group_type = 'consecutive' if len(current_group) > 1 else 'separate'
-                    groups.append({
-                        'type': group_type,
-                        'segments': current_group[:],
-                        'count': len(current_group)
-                    })
-                    current_group = []
-            else:
-                # Último segmento
-                group_type = 'consecutive' if len(current_group) > 1 else 'separate'
-                groups.append({
-                    'type': group_type,
-                    'segments': current_group[:],
-                    'count': len(current_group)
-                })
-
-        return groups
+        # SIEMPRE retornar todos los segmentos como UN SOLO grupo consecutivo
+        return [{
+            'type': 'consecutive',
+            'segments': segments,
+            'count': len(segments)
+        }]
 
     def _parse_datetime(self, dt_str):
         """Parsea string a datetime con múltiples formatos"""
