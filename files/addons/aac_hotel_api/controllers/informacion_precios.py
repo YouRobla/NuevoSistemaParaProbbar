@@ -17,7 +17,12 @@ class HotelInformacionPreciosController(http.Controller):
         return Response(
             json.dumps(data, default=json_default),
             status=status,
-            content_type='application/json'
+            content_type='application/json',
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+            }
         )
 
     def _build_price_info(self, booking):

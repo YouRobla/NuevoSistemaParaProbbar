@@ -70,6 +70,11 @@ class ContactsAPIController(http.Controller):
             json.dumps(data, default=json_default, ensure_ascii=False),
             status=status,
             content_type='application/json; charset=utf-8',
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+            }
         )
 
     def _success_response(self, data, message=None, **kwargs):

@@ -12,9 +12,9 @@ class ResourceEndpoints:
         "/api/hotel/hoteles",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
-        website=False,
+        cors="*",
     )
     @validate_api_key
     @handle_api_errors
@@ -37,9 +37,9 @@ class ResourceEndpoints:
         "/api/hotel/habitaciones",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
-        website=False,
+        cors="*",
     )
     @validate_api_key
     @handle_api_errors
@@ -80,9 +80,9 @@ class ResourceEndpoints:
         "/api/hotel/health",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
-        website=False,
+        cors="*",
     )
     def health_check(self, **kw):
         """Verificar estado del API"""

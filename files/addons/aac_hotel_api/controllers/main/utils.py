@@ -97,11 +97,16 @@ def handle_api_errors(func):
 class HotelApiUtils:
 
     def _prepare_response(self, data, status=200):
-        """Preparar respuesta HTTP con formato JSON"""
+        """Preparar respuesta HTTP con formato JSON + headers CORS"""
         return Response(
             json.dumps(data, default=json_default),
             status=status,
             content_type="application/json",
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+            }
         )
 
     def _check_access_rights(self, model_name, operation="read", raise_exception=True):
