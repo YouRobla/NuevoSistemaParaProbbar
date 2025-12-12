@@ -49,7 +49,7 @@ def validate_api_key(func):
                 headers={
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+                    'Access-Control-Allow-Headers': 'Content-Type, content-type, X-API-Key, x-api-key, Authorization, authorization, Accept, accept, Origin, origin',
                     'Access-Control-Max-Age': '86400',
                 }
             )
