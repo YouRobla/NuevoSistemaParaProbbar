@@ -111,15 +111,15 @@ class HotelBookingExtension(models.Model):
             # NUEVA LÓGICA: Solicitud de limpieza solo permitida en estado checkout
             record.is_cleaning_request_allowed = current_state == BookingState.CHECKOUT
 
-            # NUEVA LÓGICA: Sincronización de servicios permitida en reservas con cambio de habitación o en estado checkout
-            # Note: is_sync_services_allowed is in services.py, but we compute fields here?
-            # If is_sync_services_allowed is not defined here, we can't assign it.
-            # It was defined in services.py. I should move the computation there or move the field here.
-            # Computation is shared. I'll refrain from assigning is_sync_services_allowed here if the field is not here.
-            # OR I should defining the field here too? No, redefined field overrides.
-            # Best is to move all available_actions logic here, including is_sync_services_allowed field.
-            # I will assume is_sync_services_allowed is also defined here or move it here.
-            # Actually, services.py has the field. I should move the field here to keep all action booleans together.
+            # Sincronización de servicios permitida en reservas con cambio de habitación
+            # o cuando hay múltiples líneas de reserva (múltiples habitaciones)
+            has_room_change = (
+                hasattr(record, 'connected_booking_id') and record.connected_booking_id
+            ) or (
+                hasattr(record, 'split_from_booking_id') and record.split_from_booking_id
+            )
+            has_multiple_rooms = len(record.booking_line_ids) > 1 if record.booking_line_ids else False
+            record.is_sync_services_allowed = has_room_change or has_multiple_rooms
 
             # Convertir transiciones disponibles a string para el campo compute
             record.available_actions = ",".join(available_transitions)
