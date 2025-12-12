@@ -11,52 +11,53 @@ class HotelApiSerializers:
     def _get_room_change_chain(self, booking):
         """
         Rastrea toda la cadena de cambios de habitación para una reserva.
+        IMPORTANTE: Devuelve la cadena COMPLETA independientemente de qué reserva se consulte.
         """
         # Verificar acceso a la reserva
         booking_checked = self._ensure_access(booking, "read")
-        chain = []
         visited = set()
-        current = booking_checked
+        all_bookings = []
 
-        # Rastrear hacia atrás para encontrar la reserva original
-        while current and current.id not in visited:
-            visited.add(current.id)
-            chain.insert(
-                0, current
-            )  # Insertar al inicio para mantener orden cronológico
-
-            # Buscar reserva anterior
+        def traverse_chain(current_booking):
+            """Función recursiva para recorrer la cadena en ambas direcciones"""
+            if not current_booking or current_booking.id in visited:
+                return
+            
+            visited.add(current_booking.id)
+            all_bookings.append(current_booking)
+            
+            # Ir hacia ATRÁS (split_from_booking_id = reserva origen/anterior)
             if (
-                hasattr(current, "split_from_booking_id")
-                and current.split_from_booking_id
+                hasattr(current_booking, "split_from_booking_id")
+                and current_booking.split_from_booking_id
             ):
-                current = self._ensure_access(current.split_from_booking_id, "read")
-            else:
-                break
-
-        # Rastrear hacia adelante desde la reserva original para encontrar todas las reservas siguientes
-        if chain:
-            original = chain[0]
-            current = original
-
-            # Buscar todas las reservas que tienen esta como split_from_booking_id
-            while current:
-                self._check_access_rights("hotel.booking", "read")
-                next_bookings = request.env["hotel.booking"].search(
-                    [("split_from_booking_id", "=", current.id)]
-                )
+                prev_booking = self._ensure_access(current_booking.split_from_booking_id, "read")
+                traverse_chain(prev_booking)
+            
+            # Ir hacia ADELANTE (connected_booking_id = reserva destino/siguiente)
+            if (
+                hasattr(current_booking, "connected_booking_id")
+                and current_booking.connected_booking_id
+            ):
+                next_booking = self._ensure_access(current_booking.connected_booking_id, "read")
+                traverse_chain(next_booking)
+            
+            # También buscar reservas que tengan a esta como split_from_booking_id
+            # (por si connected_booking_id no está seteado correctamente)
+            self._check_access_rights("hotel.booking", "read")
+            next_bookings = request.env["hotel.booking"].search(
+                [("split_from_booking_id", "=", current_booking.id)]
+            )
+            if next_bookings:
                 self._check_access_rule(next_bookings, "read")
+                for next_b in next_bookings:
+                    traverse_chain(next_b)
 
-                if next_bookings:
-                    # Tomar la primera (debería haber solo una normalmente)
-                    current = self._ensure_access(next_bookings[0], "read")
-                    if current.id not in visited:
-                        visited.add(current.id)
-                        chain.append(current)
-                    else:
-                        break
-                else:
-                    break
+        # Iniciar el recorrido desde la reserva actual
+        traverse_chain(booking_checked)
+
+        # Ordenar por check_in para tener orden cronológico
+        chain = sorted(all_bookings, key=lambda b: b.check_in)
 
         # Encontrar la posición de la reserva actual en la cadena
         current_position = None
@@ -351,6 +352,20 @@ class HotelApiSerializers:
                 }
 
             room_change_chain = []
+            
+            # Encontrar el order_id compartido (de la reserva original o la primera que tenga uno)
+            shared_order = None
+            shared_order_id = None
+            shared_order_name = None
+            shared_order_amount = 0
+            for chain_booking in chain:
+                if chain_booking.order_id:
+                    shared_order = chain_booking.order_id
+                    shared_order_id = shared_order.id
+                    shared_order_name = shared_order.name
+                    shared_order_amount = shared_order.amount_total
+                    break
+            
             for i, chain_booking in enumerate(chain):
                 chain_rooms = self._build_room_info_from_booking(chain_booking)
                 room_change_chain.append(
@@ -365,8 +380,18 @@ class HotelApiSerializers:
                         "is_last": i == len(chain) - 1,
                         "is_current": chain_booking.id == booking.id,
                         "rooms": chain_rooms,
+                        # Agregar info del pedido compartido
+                        "order_id": chain_booking.order_id.id if chain_booking.order_id else shared_order_id,
+                        "order_name": chain_booking.order_id.name if chain_booking.order_id else shared_order_name,
                     }
                 )
+            
+            # Añadir información del pedido compartido al room_change_info
+            booking_data["chain_shared_order"] = {
+                "order_id": shared_order_id,
+                "order_name": shared_order_name,
+                "order_amount_total": shared_order_amount,
+            }
 
             original_room = None
             new_room = None
@@ -416,6 +441,7 @@ class HotelApiSerializers:
                 "chain_length": 1,
             }
             booking_data["room_change_chain"] = []
+            booking_data["chain_shared_order"] = None
 
         booking_data["rooms"] = self._build_room_lines(booking.booking_line_ids)
         booking_data["documents"] = self._build_documents_data(booking.docs_ids)
