@@ -569,11 +569,6 @@ class HotelApiSerializers:
                     else [room_data["tax_ids"]]
                 )
                 booking_line_vals["tax_ids"] = [(6, 0, tax_ids)]
-            else:
-                # Si no se especifican tax_ids, copiar los impuestos del producto
-                product = request.env["product.product"].browse(product_id)
-                if product.taxes_id:
-                    booking_line_vals["tax_ids"] = [(6, 0, product.taxes_id.ids)]
 
             if room_data.get("description"):
                 booking_line_vals["description"] = room_data["description"]
