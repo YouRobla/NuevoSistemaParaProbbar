@@ -50,6 +50,21 @@ class HotelBookingExtension(models.Model):
         help="Indica si esta reserva es el destino de un cambio de habitación",
     )
 
+    has_room_change = fields.Boolean(
+        string="Tiene Cambio de Habitación",
+        compute="_compute_has_room_change",
+        store=True,
+        help="Indica si esta reserva está vinculada a un cambio de habitación",
+    )
+
+    @api.depends('split_from_booking_id', 'connected_booking_id')
+    def _compute_has_room_change(self):
+        """Computar si la reserva tiene cambio de habitación"""
+        for record in self:
+            record.has_room_change = bool(
+                record.split_from_booking_id or record.connected_booking_id
+            )
+
     # --- SOBRESCRIBIR CAMPOS PRINCIPALES PARA SOPORTE DE HORAS ---
 
     # Redefinir booking_days como Float para aceptar fracciones de día (horas)
