@@ -18,9 +18,27 @@ def validate_api_key(func):
     
     La API key debe venir en el header 'X-API-Key' o 'Authorization: Bearer <key>'
     Si la validación es exitosa, establece el usuario correspondiente en request.env.
+    
+    IMPORTANTE: Las peticiones OPTIONS (CORS preflight) pasan sin validación.
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        # ==========================================
+        # CORS PREFLIGHT: Permitir OPTIONS sin autenticación
+        # ==========================================
+        if request.httprequest.method == 'OPTIONS':
+            _logger.debug("Petición OPTIONS detectada, respondiendo sin validación de API key")
+            return Response(
+                '',
+                status=200,
+                headers={
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+                    'Access-Control-Max-Age': '86400',
+                }
+            )
+        
         # Obtener API key del header
         api_key = None
         
@@ -36,8 +54,8 @@ def validate_api_key(func):
             if auth_header and auth_header.startswith('Bearer '):
                 api_key = auth_header.replace('Bearer ', '').strip()
         
-        # Si aún no hay API key, intentar desde parámetros (solo para GET/OPTIONS)
-        if not api_key and request.httprequest.method in ('GET', 'OPTIONS'):
+        # Si aún no hay API key, intentar desde parámetros (solo para GET)
+        if not api_key and request.httprequest.method == 'GET':
             api_key = request.params.get('api_key') or request.httprequest.args.get('api_key')
         
         if not api_key:
@@ -53,7 +71,10 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
-                    'WWW-Authenticate': 'Bearer'
+                    'WWW-Authenticate': 'Bearer',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
                 }
             )
         
@@ -91,7 +112,10 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
-                    'WWW-Authenticate': 'Bearer'
+                    'WWW-Authenticate': 'Bearer',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
                 }
             )
         
@@ -106,7 +130,10 @@ def validate_api_key(func):
                 status=401,
                 content_type='application/json',
                 headers={
-                    'WWW-Authenticate': 'Bearer'
+                    'WWW-Authenticate': 'Bearer',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
                 }
             )
         
