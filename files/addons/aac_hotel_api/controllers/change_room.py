@@ -214,64 +214,64 @@ class ChangeRoomApiController(http.Controller):
             start_datetime_str = payload.get('change_start_datetime') or payload.get('change_start_date')
             end_datetime_str = payload.get('change_end_datetime') or payload.get('change_end_date')
         
-        # Verificar si se proporcionaron horas separadas
-        check_in_hour = payload.get('check_in_hour')
-        check_in_minute = payload.get('check_in_minute')
-        check_out_hour = payload.get('check_out_hour')
-        check_out_minute = payload.get('check_out_minute')
+            # Verificar si se proporcionaron horas separadas
+            check_in_hour = payload.get('check_in_hour')
+            check_in_minute = payload.get('check_in_minute')
+            check_out_hour = payload.get('check_out_hour')
+            check_out_minute = payload.get('check_out_minute')
         
-        # Si se proporcionaron horas separadas, construir datetime desde fecha + horas
-        if start_datetime_str and check_in_hour is not None:
-            # Construir datetime desde fecha + horas separadas
-            start_date_obj = self._parse_datetime_or_date(start_datetime_str, 'change_start')
-            if isinstance(start_date_obj, datetime):
-                start_date_obj = start_date_obj.date()
-            elif not hasattr(start_date_obj, 'year'):  # No es date ni datetime
-                if isinstance(start_datetime_str, str):
-                    start_date_obj = fields.Date.from_string(start_datetime_str)
-                else:
-                    raise UserError('No se pudo parsear la fecha de inicio.')
-            
-            # Validar que tenemos un objeto date válido antes de usar datetime.combine
-            if not isinstance(start_date_obj, date_type):
-                raise UserError('Fecha de inicio inválida.')
-            
-            # Crear datetime con las horas proporcionadas
-            # start_date_obj está garantizado como date_type por la validación anterior
-            start_datetime = datetime.combine(
-                start_date_obj,  # type: ignore[arg-type]
-                time(
-                    hour=int(check_in_hour),
-                    minute=int(check_in_minute) if check_in_minute is not None else 0
+            # Si se proporcionaron horas separadas, construir datetime desde fecha + horas
+            if start_datetime_str and check_in_hour is not None:
+                # Construir datetime desde fecha + horas separadas
+                start_date_obj = self._parse_datetime_or_date(start_datetime_str, 'change_start')
+                if isinstance(start_date_obj, datetime):
+                    start_date_obj = start_date_obj.date()
+                elif not hasattr(start_date_obj, 'year'):  # No es date ni datetime
+                    if isinstance(start_datetime_str, str):
+                        start_date_obj = fields.Date.from_string(start_datetime_str)
+                    else:
+                        raise UserError('No se pudo parsear la fecha de inicio.')
+                
+                # Validar que tenemos un objeto date válido antes de usar datetime.combine
+                if not isinstance(start_date_obj, date_type):
+                    raise UserError('Fecha de inicio inválida.')
+                
+                # Crear datetime con las horas proporcionadas
+                # start_date_obj está garantizado como date_type por la validación anterior
+                start_datetime = datetime.combine(
+                    start_date_obj,  # type: ignore[arg-type]
+                    time(
+                        hour=int(check_in_hour),
+                        minute=int(check_in_minute) if check_in_minute is not None else 0
+                    )
                 )
-            )
-            start_datetime_str = start_datetime.strftime('%Y-%m-%d %H:%M:%S')
+                start_datetime_str = start_datetime.strftime('%Y-%m-%d %H:%M:%S')
         
-        if end_datetime_str and check_out_hour is not None:
-            # Construir datetime desde fecha + horas separadas
-            end_date_obj = self._parse_datetime_or_date(end_datetime_str, 'change_end')
-            if isinstance(end_date_obj, datetime):
-                end_date_obj = end_date_obj.date()
-            elif not hasattr(end_date_obj, 'year'):  # No es date ni datetime
-                if isinstance(end_datetime_str, str):
-                    end_date_obj = fields.Date.from_string(end_datetime_str)
-                else:
-                    raise UserError('No se pudo parsear la fecha de fin.')
-            
-            # Validar que tenemos un objeto date válido antes de usar datetime.combine
-            if not isinstance(end_date_obj, date_type):
-                raise UserError('Fecha de fin inválida.')
-            
-            # Crear datetime con las horas proporcionadas
-            # end_date_obj está garantizado como date_type por la validación anterior
-            end_datetime = datetime.combine(
-                end_date_obj,  # type: ignore[arg-type]
-                time(
-                    hour=int(check_out_hour),
-                    minute=int(check_out_minute) if check_out_minute is not None else 0
+            if end_datetime_str and check_out_hour is not None:
+                # Construir datetime desde fecha + horas separadas
+                end_date_obj = self._parse_datetime_or_date(end_datetime_str, 'change_end')
+                if isinstance(end_date_obj, datetime):
+                    end_date_obj = end_date_obj.date()
+                elif not hasattr(end_date_obj, 'year'):  # No es date ni datetime
+                    if isinstance(end_datetime_str, str):
+                        end_date_obj = fields.Date.from_string(end_datetime_str)
+                    else:
+                        raise UserError('No se pudo parsear la fecha de fin.')
+                
+                # Validar que tenemos un objeto date válido antes de usar datetime.combine
+                if not isinstance(end_date_obj, date_type):
+                    raise UserError('Fecha de fin inválida.')
+                
+                # Crear datetime con las horas proporcionadas
+                # end_date_obj está garantizado como date_type por la validación anterior
+                end_datetime = datetime.combine(
+                    end_date_obj,  # type: ignore[arg-type]
+                    time(
+                        hour=int(check_out_hour),
+                        minute=int(check_out_minute) if check_out_minute is not None else 0
+                    )
                 )
-            )
-            end_datetime_str = end_datetime.strftime('%Y-%m-%d %H:%M:%S')
+                end_datetime_str = end_datetime.strftime('%Y-%m-%d %H:%M:%S')
         
             if not start_datetime_str or not end_datetime_str:
                 raise UserError('Debe proporcionar change_start_date/change_start_datetime y change_end_date/change_end_datetime, o fechas con check_in_hour/check_out_hour.')
