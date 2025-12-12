@@ -13,3 +13,4 @@ from . import extra_infos
 from . import informacion_precios
 from . import change_room
 from . import service_sync
+from . import batch_reservations
