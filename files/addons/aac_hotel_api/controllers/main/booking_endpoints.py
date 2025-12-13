@@ -15,7 +15,7 @@ class BookingEndpoints:
         "/api/hotel/reservas/<int:hotel_id>",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -68,7 +68,7 @@ class BookingEndpoints:
         "/api/hotel/reservas/habitacion/<int:room_id>",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -180,7 +180,7 @@ class BookingEndpoints:
         "/api/hotel/reservas",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -316,7 +316,7 @@ class BookingEndpoints:
         "/api/hotel/reserva/<int:reserva_id>",
         auth="public",
         type="http",
-        methods=["GET"],
+        methods=["GET", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -343,7 +343,7 @@ class BookingEndpoints:
         "/api/hotel/reserva",
         auth="public",
         type="http",
-        methods=["POST"],
+        methods=["POST", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -467,7 +467,7 @@ class BookingEndpoints:
         "/api/hotel/reserva/<int:reserva_id>",
         auth="public",
         type="http",
-        methods=["PUT"],
+        methods=["PUT", "OPTIONS"],
         csrf=False,
         website=False,
     )
@@ -566,7 +566,7 @@ class BookingEndpoints:
         "/api/hotel/reserva/<int:reserva_id>",
         auth="public",
         type="http",
-        methods=["DELETE"],
+        methods=["DELETE", "OPTIONS"],
         csrf=False,
         website=False,
     )

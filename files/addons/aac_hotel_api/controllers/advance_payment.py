@@ -35,7 +35,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/advance_payment/options',
         type='http',
         auth='public',
-        methods=['GET'],
+        methods=['GET', 'OPTIONS'],
         csrf=False,
         website=False
     )
@@ -144,7 +144,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/print_bill',
         type='json',
         auth='public',
-        methods=['POST'],
+        methods=['POST', 'OPTIONS'],
         csrf=False,
         website=False
     )
@@ -213,7 +213,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/create_invoice',
         type='json',
         auth='public',
-        methods=['POST'],
+        methods=['POST', 'OPTIONS'],
         csrf=False,
         website=False
     )
@@ -265,7 +265,7 @@ class AdvancePaymentApiController(http.Controller):
         '/api/hotel/reserva/<int:booking_id>/mark_room_ready',
         type='json',
         auth='public',
-        methods=['POST'],
+        methods=['POST', 'OPTIONS'],
         csrf=False,
         website=False
     )
