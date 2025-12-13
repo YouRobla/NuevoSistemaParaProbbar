@@ -47,6 +47,7 @@ class BatchReservationsController(http.Controller):
             content_type='application/json',
             headers={
 
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
             }
@@ -58,6 +59,7 @@ class BatchReservationsController(http.Controller):
             '',
             headers={
 
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
                 'Access-Control-Max-Age': '86400',
@@ -66,7 +68,7 @@ class BatchReservationsController(http.Controller):
         )
 
     @http.route('/api/hotel/reservas/batch', type='http', auth='public',
-                methods=['POST', 'OPTIONS'], cors='*', csrf=False)
+                methods=['POST', 'OPTIONS'], csrf=False)
     @validate_api_key
     def create_batch_reservations(self, **kwargs):
         """

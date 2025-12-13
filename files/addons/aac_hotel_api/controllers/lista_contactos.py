@@ -72,6 +72,7 @@ class ContactsAPIController(http.Controller):
             content_type='application/json; charset=utf-8',
             headers={
 
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
             }
