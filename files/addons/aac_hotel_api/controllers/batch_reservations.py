@@ -46,7 +46,7 @@ class BatchReservationsController(http.Controller):
             status=status,
             content_type='application/json',
             headers={
-                'Access-Control-Allow-Origin': '*',
+
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
             }
@@ -57,7 +57,7 @@ class BatchReservationsController(http.Controller):
         return Response(
             '',
             headers={
-                'Access-Control-Allow-Origin': '*',
+
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
                 'Access-Control-Max-Age': '86400',
