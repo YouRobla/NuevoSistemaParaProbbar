@@ -8,30 +8,8 @@ from .utils import handle_api_errors
 
 class ResourceEndpoints:
 
-    @http.route(
-        "/api/hotel/hoteles",
-        auth="public",
-        type="http",
-        methods=["GET", "OPTIONS"],
-        csrf=False,
-        cors="*",
-    )
-    @validate_api_key
-    @handle_api_errors
-    def get_hoteles(self, **kw):
-        """Obtener lista de hoteles disponibles"""
-        hotels = request.env["hotel.hotels"].search([])
-        hotels_list = [
-            {
-                "id": hotel.id,
-                "name": hotel.name,
-                "active": hotel.active if hasattr(hotel, "active") else True,
-            }
-            for hotel in hotels
-        ]
-        return self._prepare_response(
-            {"success": True, "count": len(hotels_list), "data": hotels_list}
-        )
+    # get_hoteles moved to lista_hoteles.py to avoid duplicates
+    # and duplicate CORS headers.
 
     @http.route(
         "/api/hotel/habitaciones",
@@ -39,7 +17,7 @@ class ResourceEndpoints:
         type="http",
         methods=["GET", "OPTIONS"],
         csrf=False,
-        cors="*",
+        # cors="*",
     )
     @validate_api_key
     @handle_api_errors
@@ -82,7 +60,7 @@ class ResourceEndpoints:
         type="http",
         methods=["GET", "OPTIONS"],
         csrf=False,
-        cors="*",
+        # cors="*",
     )
     def health_check(self, **kw):
         """Verificar estado del API"""
