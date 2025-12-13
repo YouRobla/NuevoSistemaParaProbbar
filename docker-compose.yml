@@ -16,7 +16,6 @@ services:
     networks:
       - odoonet
     labels:
-      # Habilitar Traefik para este servicio
       - "traefik.enable=true"
 
   db:
